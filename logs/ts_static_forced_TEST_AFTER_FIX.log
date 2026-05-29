@@ -1,0 +1,77 @@
+17:43:28 [experiments         ] INFO    Loaded 150 datasets from dataset_ts_no_anomaly_medium.pkl
+17:43:28 [experiments         ] INFO    Parsed dataset indices: [3]
+17:43:28 [experiments         ] INFO    Run directory: outputs/ts_static_forced_TEST_AFTER_FIX/20260423_174328/dataset_ts_no_anomaly_medium
+17:43:28 [experiments         ] INFO    ======================================================================
+EXPERIMENT CONFIG
+──────────────────────────────────────────────────────────────────────
+{
+    "domain": "time_series",
+    "data_pkl": "dataset_ts_no_anomaly_medium.pkl",
+    "dataset_idx": "3",
+    "max_steps": 5,
+    "proposals_per_step": 3,
+    "verbosity": 1,
+    "pytensor_mode": "FAST_RUN",
+    "model": {
+        "litellm_model": "azure/gpt-5.4-mini",
+        "max_tokens": 16000,
+        "temperature": 0.7,
+        "backend": "api",
+        "reasoning_effort": "low",
+        "num_retries": 5,
+        "call_timeout": 300.0,
+        "litellm_params": null
+    },
+    "toolkit": {
+        "mode": "static",
+        "code_gen_model": null,
+        "code_gen_temperature": 0.3,
+        "force_tool_call": true,
+        "max_tool_calls_per_step": 1,
+        "accumulate_tools": false,
+        "tools_max_size": -1,
+        "tool_registry_filename": "tool_registry.json"
+    },
+    "parallel": {
+        "nproc": 0,
+        "nthread": 0,
+        "compute_threads": 1,
+        "max_rpm": 120
+    },
+    "output": {
+        "expt": "ts_static_forced_TEST_AFTER_FIX",
+        "base_dir": "outputs",
+        "output_format": "parquet"
+    }
+}
+======================================================================
+17:43:28 [experiments         ] INFO    Running 1 dataset(s): outer=sync(workers=1), inner=sync(workers=1)
+17:43:28 [experiment_workers  ] INFO    === DATASET RUN start  idx=3  label='no anomalies'  pid=54229  tid=8693669632  started=2026-04-23T17:43:28 ===
+no anomalies[3] → azure/gpt-5.4-mini:   0%|                                 | 0/6 [00:00<?, ?step/s]Step 0: proposal:   0%|                                                     | 0/6 [00:00<?, ?step/s]Step 0: proposal:   0%|[38;2;2;136;209m                                                     [0m| 0/6 [00:00<?, ?step/s][0m17:43:28 [experiments         ] INFO    [step 0] Phase 1: diagnostic tool selection
+17:43:32 [experiments         ] INFO    [step 0] Phase 1 complete: executed 1 diagnostic tool(s).
+17:43:32 [experiments         ] INFO    [step 0] Phase 2: proposal generation
+17:43:40 [experiments         ] INFO    [step 0] Phase 2 complete: received 3 proposal(s).
+17:43:40 [experiments         ] INFO    [step 0] Phase 3: code generation for 3 proposal(s).
+17:43:44 [experiments         ] INFO    [step 0] Phase 3 complete: 3/3 proposal(s) generated code.
+17:43:44 [experiments         ] INFO    [step 0] Phase 4: fitting generated models.
+17:43:44 [/Users/adivekar/miniconda3/lib/python3.12/site-packages/pytensor/link/c/lazylinker_c.py] INFO    Compiling new CVM
+17:43:45 [/Users/adivekar/miniconda3/lib/python3.12/site-packages/pytensor/link/c/lazylinker_c.py] INFO    New version 0.32
+MAP ╸                                3% 0:13:27 logp = -933.17, ||grad|| = 298.4
+
+MAP                              1% 0:07:36 logp = -1,826.6, ||grad|| = 0.032095
+
+MAP                              1% 0:11:43 logp = -1,833.8, ||grad|| = 0.054163
+
+17:46:24 [experiments         ] INFO    [step 0] Phase 4 complete: best family=['periodic_complex']  AIC=1972.4
+17:46:27 [experiments         ] INFO    [step 0] Complete: family=['periodic_complex']  AIC=1972.4  tools=get_dominant_period
+Step 0: proposal:  17%|[38;2;2;136;209m███████▎                                    [0m| 1/6 [02:59<14:58, 179.67s/step][0mstep 1: feedback:  17%|[38;2;2;136;209m███████▎                                    [0m| 1/6 [03:00<14:58, 179.67s/step][0mstep 1: feedback:  17%|[38;2;2;136;209m███████▎                                    [0m| 1/6 [03:00<14:58, 179.67s/step][0m17:46:29 [experiments         ] INFO    [step 1] Phase 1: diagnostic tool selection
+17:46:34 [experiments         ] INFO    [step 1] Phase 1 complete: executed 1 diagnostic tool(s).
+17:46:34 [experiments         ] INFO    [step 1] Phase 2: proposal generation
+17:46:43 [experiments         ] INFO    [step 1] Phase 2 complete: model marked COMPLETE.
+step 1: feedback:  33%|[38;2;2;136;209m███████████████                              [0m| 2/6 [03:15<06:03, 90.84s/step][0m[done — ['periodic_complex'] (AIC=1972.4)] step 1: feedback:  33%|[38;2;67;160;71m▋ [0m| 2/6 [03:15<06:03, 90.84s/step][0m[done — ['periodic_complex'] (AIC=1972.4)] step 1: feedback:  33%|[38;2;67;160;71m▋ [0m| 2/6 [03:15<06:31, 97.98s/step][0m
+
+[Dataset 3] Status: ok
+  True: no anomalies
+  Final family: ['periodic_complex']
+  Final AIC: 1972.4
+  Steps: 2
