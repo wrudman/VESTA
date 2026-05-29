@@ -1,0 +1,57 @@
+idx,final_response,tool_calls
+0,"<final_pymc_model>
+distribution_family: [""normal"", ""lognormal""]
+is_mixture: true
+code:
+with pm.Model() as model:
+    import numpy as np
+    # Mixture weight for two components
+    w = pm.Dirichlet('w', a=np.array([1., 1.]))
+    # Component 1: Normal (captures left, near-zero/negative symmetric mode)
+    mu_norm = pm.Normal('mu_norm', mu=-0.5, sigma=5.0)
+    sigma_norm = pm.HalfNormal('sigma_norm', sigma=5.0)
+    comp1 = pm.Normal.dist(mu=mu_norm, sigma=sigma_norm)
+    # Component 2: LogNormal (captures right positively-skewed mode and long tail)
+    mu_logn = pm.Normal('mu_logn', mu=1.1, sigma=3.0)     # log-space mean (log(approx 3) ~1.1)
+    sigma_logn = pm.HalfNormal('sigma_logn', sigma=3.0)
+    comp2 = pm.LogNormal.dist(mu=mu_logn, sigma=sigma_logn)
+    # Mixture observed; `y` should be the 1D data array corresponding to the histogram
+    y_obs = pm.Mixture('y_obs',
+                       w=w,
+                       comp_dists=[comp1, comp2],
+                       observed=y)
+    # Quick point estimate (MAP)
+    map_estimate = pm.find_MAP()
+</final_pymc_model>","['# Display the provided histogram image to inspect its shape as part of modeling.\nimport matplotlib.pyplot as plt\nimport numpy as np\n\n# image_clue_0 is provided in the environment per instructions\nplt.figure(figsize=(10,6))\nplt.imshow(image_clue_0)\nplt.axis(\'off\')\nplt.title(\'Provided Histogram (visual inspection for modeling)\')\nplt.show()\n\nprint(""Displayed the histogram image for model design."")']"
+1,"<final_pymc_model>
+distribution_family: [""StudentT"", ""StudentT""]
+is_mixture: true
+code:
+with pm.Model() as model:
+    # Data placeholder: replace 'y' with your observed 1D array of samples
+    # e.g., y = observed_data_array
+    # Observed variable name used below: y
+    # Mixture weight (2 components)
+    w = pm.Dirichlet('w', a=np.array([1.0, 1.0]))
+
+    # Component means: allow wide prior to cover negative and positive modes
+    mu = pm.Normal('mu', mu=0.0, sigma=5.0, shape=2)
+
+    # Component scales (positive)
+    sigma = pm.HalfNormal('sigma', sigma=5.0, shape=2)
+
+    # Degrees of freedom for each Student-T component (heavy-tail capable)
+    nu = pm.Exponential('nu_minus1', 1/29., shape=2) + 1.0
+
+    # Define the two StudentT components
+    components = [
+        pm.StudentT.dist(nu=nu[0], mu=mu[0], sigma=sigma[0]),
+        pm.StudentT.dist(nu=nu[1], mu=mu[1], sigma=sigma[1])
+    ]
+
+    # Mixture likelihood (replace 'y' with your observed data array)
+    obs = pm.Mixture('obs', w=w, comp_dists=components, observed=y)
+
+    # Find MAP estimate (requested)
+    map_estimate = pm.find_MAP()
+</final_pymc_model>","[""# Display the provided image to inspect the histogram shape\nimport matplotlib.pyplot as plt\nimport numpy as np\n\nplt.figure(figsize=(10,6))\nplt.imshow(image_clue_0)\nplt.axis('off')\nplt.title('Histogram clue (visual inspection)')\nplt.show()""]"

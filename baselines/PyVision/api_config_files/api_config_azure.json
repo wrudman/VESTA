@@ -1,0 +1,8 @@
+{
+    "azure_openai_api_key": [
+        "ADD KEY HERE"
+    ],
+    "azure_openai_endpoint": "ADD KEY HERE",
+    "model": "gpt-5-mini",
+    "api_version": "2025-04-01-preview"
+}
