@@ -1,6 +1,6 @@
 # VESTA
 
-# NOTE: REPO STILL UNDER CONSTRUCTION
+# WARNING: REPO STILL UNDER CONSTRUCTION
 
 VLM-guided PyMC model selection for distribution fitting and time-series
 forecasting.  An LLM iteratively proposes model structures (distribution
