@@ -86,12 +86,16 @@ VESTA ships as a [Harbor](https://github.com/harbor-framework/harbor) task. Harb
 # Install Harbor
 pip install harbor
 
-# Run VESTA on the DAWN distribution fitting task
-harbor run --task harbor/tasks/vesta-distribution-fitting/ \
+# Run VESTA on the DAWN distribution fitting task.
+# --path points at a local task directory; --agent oracle runs the
+# reference solution (solution/solve.sh), which is the VESTA pipeline itself.
+harbor run \
+    --path harbor/tasks/vesta-distribution-fitting/ \
+    --agent oracle \
     --env-file .env
 ```
 
-The task handles: building the Docker environment (Python 3.13, PyMC, VESTA, all dependencies), loading the dataset, running the VLM-guided fitting pipeline, and scoring results.
+`.env` must hold the API keys for your LLM provider (see `.env.example`). The task builds the Docker environment (Python 3.13, PyMC, VESTA, all dependencies), loads the dataset, runs the VLM-guided fitting pipeline, and scores the result with the verifier.
 
 ### What the Harbor task does
 
@@ -148,3 +152,21 @@ VESTA is built on **PyMC** (probabilistic programming), **LiteLLM + SlowBurn**
 ## License
 
 MIT
+
+## Citation
+
+```
+@misc{rudman2026vestavisualexplorationstatistical,
+      title={VESTA: Visual Exploration with Statistical Tool Agents}, 
+      author={William Rudman and Abhishek Divekar and Kanishk Jain and Sebastian Joseph and Stella S. R. Offner and Matthew Lease and Kyle Mahowald and Greg Durrett and Junyi Jessy Li},
+      year={2026},
+      eprint={2606.00384},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2606.00384}, 
+}
+```
+
+
+## Contact
+If you have any questions, please raise an issue or contact us at william.rudman@utexas.edu
