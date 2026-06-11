@@ -17,11 +17,11 @@ DATASETS_DIR="datasets_time_series"
 # CSV → dataset mapping
 declare -a CSV_FILES=(
     "pyvision_gpt_output_single_ts_results_ts.csv:dataset_ts_easy_50.pkl"
-    "pyvision_gpt_output_medium_ts_results_ts.csv:dataset_ts_medium_110.pkl"
-    "pyvision_gpt_output_chirp_ts_results_ts.csv:dataset_ts_gravitational_chirp_50.pkl"
+    "pyvision_gpt_output_hard_ts_results_ts.csv:dataset_ts_hard_110.pkl"
+    "pyvision_gpt_output_astro_chirp_ts_results_ts.csv:dataset_ts_astro_chirp_50.pkl"
     "pyvision_claude_output_easy_ts_results_ts.csv:dataset_ts_easy_50.pkl"
-    "pyvision_claude_output_medium_ts_results_ts.csv:dataset_ts_medium_110.pkl"
-    "pyvision_claude_output_chirp_ts_results_ts.csv:dataset_ts_gravitational_chirp_50.pkl"
+    "pyvision_claude_output_hard_ts_results_ts.csv:dataset_ts_hard_110.pkl"
+    "pyvision_claude_output_astro_chirp_ts_results_ts.csv:dataset_ts_astro_chirp_50.pkl"
 )
 
 TOTAL=${#CSV_FILES[@]}

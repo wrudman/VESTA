@@ -11,7 +11,7 @@ as strings (subclass ``str``), support fuzzy-matched construction
 type-checker friendly, and serialize cleanly via Pydantic's ``model_dump``.
 
 Identity-based comparison is the convention in this codebase:
-``mode is ToolkitMode.static`` — not ``mode == "static"``, because
+``mode is ToolkitMode.expert`` — not ``mode == "expert"``, because
 ``AutoEnum.__eq__`` is defined as identity on the singleton instance.
 """
 
@@ -67,7 +67,7 @@ class ToolkitMode(AutoEnum):
     """Which toolkit the pipeline uses for diagnostic tool selection."""
 
     none = auto()
-    static = auto()
+    expert = auto()
     generate_only = auto()
     accumulated_only = auto()
     dynamic = auto()

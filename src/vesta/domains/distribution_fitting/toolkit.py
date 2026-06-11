@@ -1393,7 +1393,7 @@ def _plot_raw_histogram(data: Any, *, fit_path: str) -> None:
 
 
 class DistributionFittingTool(Tool, Registry, ABC):
-    """Registry of all static distribution-fitting diagnostic tools.
+    """Registry of all expert distribution-fitting diagnostic tools.
 
     Concrete subclasses auto-register under their snake_case class name.
     Use ``DistributionFittingTool.of("qq_plot")`` to resolve by name,
@@ -1709,7 +1709,7 @@ class DistributionFittingToolkit(DomainToolkit):
 
     aliases: ClassVar[List[str]] = DOMAIN_ALIASES
 
-    def get_static_tools(self) -> List[Dict[str, Any]]:
+    def get_expert_tools(self) -> List[Dict[str, Any]]:
         return [tool_cls.to_openai_schema() for tool_cls in DistributionFittingTool.subclasses()]
 
     def supports_dynamic_generation(self) -> bool:
@@ -1732,7 +1732,7 @@ class DistributionFittingToolkit(DomainToolkit):
         both handled by ``_run_diagnostic_rounds()`` in ``experiments.py``
         BEFORE this method is called (the pipeline checks
         ``deps.dynamic_tools`` first and dispatches there directly).
-        This method therefore only handles the static-tool path for
+        This method therefore only handles the expert-tool path for
         this domain.
 
         Returns a structured diagnostic tool result.
@@ -1792,18 +1792,18 @@ class DistributionFittingToolkit(DomainToolkit):
                 fit_path=fit_path,
                 selected_tool_args=selected_tool_args,
             )
-            static_description: str = plot_type_descriptions.get(
+            expert_description: str = plot_type_descriptions.get(
                 tool_result.tool_name,
                 tool_result.tool_description,
             )
             return DiagnosticToolResult(
                 tool_name=tool_result.tool_name,
-                tool_description=static_description,
+                tool_description=expert_description,
                 artifacts=tool_result.artifacts,
             )
 
         raise ValueError(
-            f"Unknown static tool {selected_tool!r} for distribution-fitting. "
+            f"Unknown expert tool {selected_tool!r} for distribution-fitting. "
             f"Available: {[cls.tool_name for cls in DistributionFittingTool.subclasses()]}. "
             f"If this was meant to be a dynamic tool, the pipeline should have "
             f"dispatched it via deps.dynamic_tools before reaching execute_tool()."

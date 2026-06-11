@@ -23,19 +23,19 @@ declare -a EASY_RUNS=(
     "kimi:box_loop_ts_easy_kimi25_20260505_165959.csv"
 )
 
-# ── Gravitational chirp dataset (50 samples) ────────────────────────────────
+# ── Astro chirp dataset (50 samples) ────────────────────────────────
 declare -a CHIRP_RUNS=(
-    "claude:box_loop_ts_gravitational_chirp_claude_sonnet46_20260505_170640.csv"
-    "gpt:box_loop_ts_gravitational_chirp_gpt54_mini_20260505_170718.csv"
-    "kimi:box_loop_ts_gravitational_chirp_kimi25_20260505_170654.csv"
+    "claude:box_loop_ts_astro_chirp_claude_sonnet46_20260505_170640.csv"
+    "gpt:box_loop_ts_astro_chirp_gpt54_mini_20260505_170718.csv"
+    "kimi:box_loop_ts_astro_chirp_kimi25_20260505_170654.csv"
 )
 
-# ── Medium dataset (110 samples, split across multiple CSVs) ────────────────
+# ── Hard dataset (110 samples, split across multiple CSVs) ────────────────
 # Format: llm:csv1,csv2,csv3
-declare -a MEDIUM_RUNS=(
-    "claude:box_loop_ts_medium_claude_sonnet46_20260505_170024.csv,box_loop_ts_medium_claude_sonnet46_50to100_20260505_170121.csv,box_loop_ts_medium_claude_sonnet46_100to110_20260505_170135.csv"
-    "gpt:box_loop_ts_medium_gpt54_mini_20260505_170410.csv,box_loop_ts_medium_gpt54_mini_50to100_20260505_170422.csv,box_loop_ts_medium_gpt54_mini_100to110_20260505_170430.csv"
-    "kimi:box_loop_ts_medium_kimi25_20260505_170150.csv,box_loop_ts_medium_kimi25_50to100_20260505_170207.csv,box_loop_ts_medium_kimi25_100to110_20260505_170222.csv"
+declare -a HARD_RUNS=(
+    "claude:box_loop_ts_hard_claude_sonnet46_20260505_170024.csv,box_loop_ts_hard_claude_sonnet46_50to100_20260505_170121.csv,box_loop_ts_hard_claude_sonnet46_100to110_20260505_170135.csv"
+    "gpt:box_loop_ts_hard_gpt54_mini_20260505_170410.csv,box_loop_ts_hard_gpt54_mini_50to100_20260505_170422.csv,box_loop_ts_hard_gpt54_mini_100to110_20260505_170430.csv"
+    "kimi:box_loop_ts_hard_kimi25_20260505_170150.csv,box_loop_ts_hard_kimi25_50to100_20260505_170207.csv,box_loop_ts_hard_kimi25_100to110_20260505_170222.csv"
 )
 
 TOTAL=9
@@ -93,16 +93,16 @@ for entry in "${EASY_RUNS[@]}"; do
         "${BOXLM_DIR}/${csv_file}"
 done
 
-# ── Chirp dataset runs ───────────────────────────────────────────────────────
+# ── Astro chirp dataset runs ───────────────────────────────────────────────────────
 for entry in "${CHIRP_RUNS[@]}"; do
     IFS=: read -r llm csv_file <<< "${entry}"
-    run_eval "${llm}" "gravitational_chirp_50" "dataset_ts_gravitational_chirp_50.pkl" \
-        "${OUTPUT_BASE}/boxlm_${llm}_gravitational_chirp_50" \
+    run_eval "${llm}" "astro_chirp_50" "dataset_ts_astro_chirp_50.pkl" \
+        "${OUTPUT_BASE}/boxlm_${llm}_astro_chirp_50" \
         "${BOXLM_DIR}/${csv_file}"
 done
 
-# ── Medium dataset runs (multiple CSVs per LLM) ─────────────────────────────
-for entry in "${MEDIUM_RUNS[@]}"; do
+# ── Hard dataset runs (multiple CSVs per LLM) ─────────────────────────────
+for entry in "${HARD_RUNS[@]}"; do
     IFS=: read -r llm csv_list <<< "${entry}"
     # Split comma-separated CSV list into array
     IFS=, read -ra csv_files <<< "${csv_list}"
@@ -110,8 +110,8 @@ for entry in "${MEDIUM_RUNS[@]}"; do
     for f in "${csv_files[@]}"; do
         csv_args+=("${BOXLM_DIR}/${f}")
     done
-    run_eval "${llm}" "medium_110" "dataset_ts_medium_110.pkl" \
-        "${OUTPUT_BASE}/boxlm_${llm}_medium_110" \
+    run_eval "${llm}" "hard_110" "dataset_ts_hard_110.pkl" \
+        "${OUTPUT_BASE}/boxlm_${llm}_hard_110" \
         "${csv_args[@]}"
 done
 

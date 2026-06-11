@@ -14,8 +14,8 @@ DEFAULT_RUNS_DIR: Path = BOX_LOOP_DIR / "outputs"
 DEFAULT_OUTPUT_BASE: Path = BOX_LOOP_DIR / "evals"
 DEFAULT_DATASET_PATHS: Dict[str, Path] = {
     "easy_50": BOX_LOOP_DIR / "dataset_ts_easy_50.pkl",
-    "medium_110": BOX_LOOP_DIR / "dataset_ts_medium_110.pkl",
-    "gravitational_chirp_50": BOX_LOOP_DIR / "dataset_ts_gravitational_chirp_50.pkl",
+    "hard_110": BOX_LOOP_DIR / "dataset_ts_hard_110.pkl",
+    "astro_chirp_50": BOX_LOOP_DIR / "dataset_ts_astro_chirp_50.pkl",
 }
 DEFAULT_RUN_PREFIXES: Dict[str, Dict[str, List[str]]] = {
     "easy_50": {
@@ -23,27 +23,27 @@ DEFAULT_RUN_PREFIXES: Dict[str, Dict[str, List[str]]] = {
         "gpt": ["box_loop_ts_easy_gpt54_mini"],
         "kimi": ["box_loop_ts_easy_kimi25"],
     },
-    "medium_110": {
+    "hard_110": {
         "claude": [
-            "box_loop_ts_medium_claude_sonnet46",
-            "box_loop_ts_medium_claude_sonnet46_50to100",
-            "box_loop_ts_medium_claude_sonnet46_100to110",
+            "box_loop_ts_hard_claude_sonnet46",
+            "box_loop_ts_hard_claude_sonnet46_50to100",
+            "box_loop_ts_hard_claude_sonnet46_100to110",
         ],
         "gpt": [
-            "box_loop_ts_medium_gpt54_mini",
-            "box_loop_ts_medium_gpt54_mini_50to100",
-            "box_loop_ts_medium_gpt54_mini_100to110",
+            "box_loop_ts_hard_gpt54_mini",
+            "box_loop_ts_hard_gpt54_mini_50to100",
+            "box_loop_ts_hard_gpt54_mini_100to110",
         ],
         "kimi": [
-            "box_loop_ts_medium_kimi25",
-            "box_loop_ts_medium_kimi25_50to100",
-            "box_loop_ts_medium_kimi25_100to110",
+            "box_loop_ts_hard_kimi25",
+            "box_loop_ts_hard_kimi25_50to100",
+            "box_loop_ts_hard_kimi25_100to110",
         ],
     },
-    "gravitational_chirp_50": {
-        "claude": ["box_loop_ts_gravitational_chirp_claude_sonnet46"],
-        "gpt": ["box_loop_ts_gravitational_chirp_gpt54_mini"],
-        "kimi": ["box_loop_ts_gravitational_chirp_kimi25"],
+    "astro_chirp_50": {
+        "claude": ["box_loop_ts_astro_chirp_claude_sonnet46"],
+        "gpt": ["box_loop_ts_astro_chirp_gpt54_mini"],
+        "kimi": ["box_loop_ts_astro_chirp_kimi25"],
     },
 }
 
@@ -64,7 +64,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--dataset",
-        choices=["easy_50", "medium_110", "gravitational_chirp_50"],
+        choices=["easy_50", "hard_110", "astro_chirp_50"],
         required=True,
         help="Dataset alias to evaluate.",
     )

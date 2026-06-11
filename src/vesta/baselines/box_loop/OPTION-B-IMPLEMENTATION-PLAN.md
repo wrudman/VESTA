@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make `baselines/box_loop` runnable as a production Time Series baseline comparable to the Time Series blocks in `runs_easy.sh`, `runs_medium.sh`, and `runs_hard.sh`, while keeping the existing per-dataset core loop (`run_box_loop_for_array`) essentially unchanged.
+Make `baselines/box_loop` runnable as a production Time Series baseline comparable to the Time Series blocks in `runs_easy.sh`, `runs_hard.sh`, and `runs_astro.sh`, while keeping the existing per-dataset core loop (`run_box_loop_for_array`) essentially unchanged.
 
 This plan implements the pragmatic Option B scope:
 
@@ -515,14 +515,14 @@ python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/d
 python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_easy_50.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "azure/gpt-5.4-mini" --output outputs/box_loop_ts_easy_gpt54_mini.pkl
 ```
 
-### Medium: `dataset_ts_medium_110.pkl`
+### Hard: `dataset_ts_hard_110.pkl`
 
-Run in chunks matching `runs_medium.sh`:
+Run in chunks matching `runs_hard.sh`:
 
 ```bash
-python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_medium_110.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_medium_0to50_claude_sonnet46.pkl
-python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_medium_110.pkl --dataset-idx "50:100" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_medium_50to100_claude_sonnet46.pkl
-python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_medium_110.pkl --dataset-idx "100:110" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_medium_100to110_claude_sonnet46.pkl
+python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_hard_110.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_hard_0to50_claude_sonnet46.pkl
+python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_hard_110.pkl --dataset-idx "50:100" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_hard_50to100_claude_sonnet46.pkl
+python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_hard_110.pkl --dataset-idx "100:110" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_hard_100to110_claude_sonnet46.pkl
 ```
 
 Repeat the same chunks for:
@@ -530,12 +530,12 @@ Repeat the same chunks for:
 - `openrouter/moonshotai/kimi-k2.5`
 - `azure/gpt-5.4-mini`
 
-### Hard: `dataset_ts_gravitational_chirp_50.pkl`
+### Astro: `dataset_ts_astro_chirp_50.pkl`
 
 ```bash
-python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_gravitational_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_gravitational_chirp_claude_sonnet46.pkl
-python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_gravitational_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "openrouter/moonshotai/kimi-k2.5" --output outputs/box_loop_ts_gravitational_chirp_kimi25.pkl
-python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_gravitational_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "azure/gpt-5.4-mini" --output outputs/box_loop_ts_gravitational_chirp_gpt54_mini.pkl
+python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_astro_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "openrouter/anthropic/claude-sonnet-4.6" --output outputs/box_loop_ts_astro_chirp_claude_sonnet46.pkl
+python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_astro_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "openrouter/moonshotai/kimi-k2.5" --output outputs/box_loop_ts_astro_chirp_kimi25.pkl
+python baselines/box_loop/run.py --task box_loop_ts --data dataset_time_series/dataset_ts_astro_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --nproc 0 --model "azure/gpt-5.4-mini" --output outputs/box_loop_ts_astro_chirp_gpt54_mini.pkl
 ```
 
 Once smoke tests pass with `--nproc 0`, increase `--nproc` carefully based on API limits, for example:

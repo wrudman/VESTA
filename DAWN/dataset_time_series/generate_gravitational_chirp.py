@@ -3,7 +3,7 @@
 # # Gravitational Wave Chirp Dataset Generator
 # 
 # This script generates synthetic gravitational wave chirp time series and saves them
-# in the same pickle format as `dataset_ts_no_anomaly_medium.pkl`.
+# in the same pickle format as `dataset_ts_no_anomaly_hard.pkl`.
 # 
 # Each sample is a dict with keys:
 # - `series_id`: integer index
@@ -25,7 +25,7 @@ from pathlib import Path
 # ## 1. Load reference dataset to confirm format
 
 
-with open('dataset_ts_no_anomaly_medium.pkl', 'rb') as f:
+with open('dataset_ts_no_anomaly_hard.pkl', 'rb') as f:
     ref_data = pickle.load(f)
 
 print(f"Reference dataset: {len(ref_data)} samples")
@@ -366,7 +366,7 @@ for i, sample in enumerate(dataset):
 
 # ## (Full Dataset) 50-sample dataset (40 standard chirps + 10 with amplitude decay)
 # 
-# Overwrites `dataset_ts_gravitational_chirp_50.pkl` with 50 samples:
+# Overwrites `dataset_ts_astro_chirp_50.pkl` with 50 samples:
 # - 40 standard chirps with programmatically randomized `f0`, `beta`, `A`, `sigma`, `seed`.
 # - 10 chirps with an exponential amplitude-decay envelope `exp(-t/tau)` applied on top of `generate_chirp`. This tests whether the warped-periodic GP still fits when the oscillation dies down over the window.
 
@@ -552,7 +552,7 @@ plt.show()
 
 
 # Overwrite dataset_gravitational_chirp.pkl with the 50-sample dataset
-output_path_ext = 'dataset_ts_gravitational_chirp_50.pkl'
+output_path_ext = 'dataset_ts_astro_chirp_50.pkl'
 with open(output_path_ext, 'wb') as f:
     pickle.dump(dataset_gen, f)
 

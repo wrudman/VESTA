@@ -20,7 +20,7 @@ The tool system uses a two-level Registry pattern:
 2. Each **domain** creates its own Registry subclass of ``Tool``:
    - ``DistributionFittingTool(Tool, Registry, ABC)`` in
      ``domains/distribution_fitting/toolkit.py``
-   - ``TimeSeriesStaticTool(Tool, Registry, ABC)`` in
+   - ``TimeSeriesExpertTool(Tool, Registry, ABC)`` in
      ``domains/time_series/toolkit.py``
 
    Concrete tool implementations (e.g., ``QQPlot``, ``FitVsActuals``)
@@ -50,14 +50,14 @@ WHY ``Tool`` is NOT a Registry:
     time-series domain where QQ plots don't exist.  Domain-scoped registries
     prevent this: each domain's Registry contains only its own tools.
 
-Adding a new static tool:
+Adding a new expert tool:
     1. Define a class in the domain's ``toolkit.py`` that subclasses the
        domain's Tool Registry (e.g., ``class MyTool(DistributionFittingTool)``).
     2. Set ``tool_description`` and ``output_type`` as ClassVars.
     3. Implement ``execute()``.
     That's it.  The tool auto-registers under its snake_case class name,
     auto-generates its OpenAI schema, and is included in
-    ``get_static_tools()`` via ``DistributionFittingTool.subclasses()``.
+    ``get_expert_tools()`` via ``DistributionFittingTool.subclasses()``.
 """
 
 import inspect
@@ -449,14 +449,14 @@ class DomainPrompts(Typed, Registry, ABC):
 
 
 class DomainToolkit(Typed, Registry, ABC):
-    """Static tool schemas + tool execution dispatch.
+    """Expert tool schemas + tool execution dispatch.
 
     Tool implementation functions remain as module-level functions in each
     domain's ``toolkit.py``. This class calls them but does not contain them.
     """
 
     @abstractmethod
-    def get_static_tools(self) -> List[Dict[str, Any]]: ...
+    def get_expert_tools(self) -> List[Dict[str, Any]]: ...
 
     @abstractmethod
     def execute_tool(

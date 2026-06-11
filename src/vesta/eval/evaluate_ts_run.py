@@ -8,9 +8,9 @@ Outputs:
   c) Box-plot of best-performance spread across samples for a chosen metric.
 
 Usage examples:
-  python evaluate_ts_run.py outputs/ts_static_forced/20260423_185203
-  python evaluate_ts_run.py outputs/ts_static_forced/20260423_185203 --box-metric rmse
-  python evaluate_ts_run.py outputs/ts_static_forced/20260423_185203 --data-dir /path/to/pkls
+  python evaluate_ts_run.py outputs/ts_expert_forced/20260423_185203
+  python evaluate_ts_run.py outputs/ts_expert_forced/20260423_185203 --box-metric rmse
+  python evaluate_ts_run.py outputs/ts_expert_forced/20260423_185203 --data-dir /path/to/pkls
 """
 from __future__ import annotations
 

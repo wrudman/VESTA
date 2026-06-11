@@ -16,12 +16,12 @@ Usage:
   python evaluate_boxlm_elpd.py box-lm-runs/box_loop_ts_easy_claude_sonnet46_20260505_165351.csv \
       --dataset-pkl datasets_time_series/dataset_ts_easy_50.pkl
 
-  # Multiple CSVs for medium dataset (will be concatenated)
+  # Multiple CSVs for hard dataset (will be concatenated)
   python evaluate_boxlm_elpd.py \
-      box-lm-runs/box_loop_ts_medium_claude_sonnet46_20260505_170024.csv \
-      box-lm-runs/box_loop_ts_medium_claude_sonnet46_50to100_20260505_170121.csv \
-      box-lm-runs/box_loop_ts_medium_claude_sonnet46_100to110_20260505_170135.csv \
-      --dataset-pkl datasets_time_series/dataset_ts_medium_110.pkl
+      box-lm-runs/box_loop_ts_hard_claude_sonnet46_20260505_170024.csv \
+      box-lm-runs/box_loop_ts_hard_claude_sonnet46_50to100_20260505_170121.csv \
+      box-lm-runs/box_loop_ts_hard_claude_sonnet46_100to110_20260505_170135.csv \
+      --dataset-pkl datasets_time_series/dataset_ts_hard_110.pkl
 
 Output:
   Writes ts_evaluation_elpd.csv in --output-dir with the same schema as

@@ -9,8 +9,8 @@ This module provides:
 
 2. **DynamicToolSpec(Typed)** — a frozen data class describing one
    runtime-generated diagnostic tool (name + description + code + an
-   ``execute()`` method).  Unlike the static tool classes
-   (``DistributionFittingTool``, ``TimeSeriesStaticTool``) which are
+   ``execute()`` method).  Unlike the expert tool classes
+   (``DistributionFittingTool``, ``TimeSeriesExpertTool``) which are
    Morphic ``Registry`` subclasses, ``DynamicToolSpec`` is *data*: every
    ``run()`` call owns its own ``Dict[str, DynamicToolSpec]`` (see
    ``experiment_step_state.RunDeps.dynamic_tools``) so dynamic tools
@@ -185,7 +185,7 @@ class DynamicToolSpec(Typed):
 
     Architecture (see ``domains/__init__.py`` module docstring):
 
-    - Static tools (``DistributionFittingTool``, ``TimeSeriesStaticTool``)
+    - Expert tools (``DistributionFittingTool``, ``TimeSeriesExpertTool``)
       are ``Tool + Registry`` subclasses: compile-time-known, one class
       per tool, auto-registered by Morphic's metaclass.
     - Dynamic tools are **not** Registry entries.  They are frozen
@@ -222,7 +222,7 @@ class DynamicToolSpec(Typed):
         share a hierarchy.  The pipeline dispatches on them separately
         in ``_run_diagnostic_rounds`` (dynamic tool in ``deps.dynamic_tools``
         → ``spec.execute(...)`` directly; otherwise → domain
-        ``execute_tool`` for the static path).
+        ``execute_tool`` for the expert path).
 
     Reproducibility fields:
         ``domain``, ``code_gen_model``, and ``code_gen_prompt`` together
@@ -481,7 +481,7 @@ GENERATE_NEW_TOOL_SCHEMA: Dict[str, Any] = {
             "when no existing tool can answer your current diagnostic "
             "question (e.g., you need a zoomed tail plot, a specific "
             "statistical test, a residual analysis, or a custom transform "
-            "that the static toolkit does not provide)."
+            "that the expert toolkit does not provide)."
         ),
         "parameters": {
             "type": "object",
@@ -688,7 +688,7 @@ def _build_tool_generation_prompt(*, domain: Domain, tool_description: str) -> s
 def build_tools_list(
     *,
     toolkit_mode: ToolkitMode,
-    static_tools: List[Dict[str, Any]],
+    expert_tools: List[Dict[str, Any]],
     dynamic_tools: Dict[str, DynamicToolSpec],
 ) -> List[Dict[str, Any]]:
     """Build the ``tools`` list passed to ``backend.predict()``.
@@ -697,8 +697,8 @@ def build_tools_list(
         toolkit_mode: ``ToolkitMode`` enum member. String inputs like
             ``"generate_only"`` or ``"generate-only"`` are auto-coerced
             by ``@validate`` via AutoEnum fuzzy matching.
-        static_tools: The domain's static tool schemas (from
-            ``DomainToolkit.get_static_tools()``).
+        expert_tools: The domain's expert tool schemas (from
+            ``DomainToolkit.get_expert_tools()``).
         dynamic_tools: The run's dyn-tool dict (from
             ``RunDeps.dynamic_tools``).  Empty at step 0 of a fresh run
             with ``accumulate_tools=False``.  Schemas are emitted only
@@ -711,8 +711,8 @@ def build_tools_list(
     """
     if toolkit_mode is ToolkitMode.none:
         return []
-    elif toolkit_mode is ToolkitMode.static:
-        return list(static_tools)
+    elif toolkit_mode is ToolkitMode.expert:
+        return list(expert_tools)
     elif toolkit_mode is ToolkitMode.generate_only:
         tools: List[Dict[str, Any]] = [spec.to_openai_schema() for spec in dynamic_tools.values()]
         tools.append(GENERATE_NEW_TOOL_SCHEMA)
@@ -720,11 +720,11 @@ def build_tools_list(
     elif toolkit_mode is ToolkitMode.accumulated_only:
         return [spec.to_openai_schema() for spec in dynamic_tools.values()]
     elif toolkit_mode is ToolkitMode.dynamic:
-        static_names: Set[str] = {t["function"]["name"] for t in static_tools}
-        tools = list(static_tools)
+        expert_names: Set[str] = {t["function"]["name"] for t in expert_tools}
+        tools = list(expert_tools)
 
         for spec in dynamic_tools.values():
-            if spec.name not in static_names:
+            if spec.name not in expert_names:
                 tools.append(spec.to_openai_schema())
 
         tools.append(GENERATE_NEW_TOOL_SCHEMA)
@@ -1145,7 +1145,7 @@ calling any tool."""
 # Appended to DIAGNOSTIC_PHASE_PROMPT only when the toolkit mode allows
 # the VLM to synthesize new tools (i.e. ``ToolkitMode.generate_only`` or
 # ``ToolkitMode.dynamic``).  It must NOT be shown under ``none`` (no
-# tools offered at all) or ``static`` (``generate_new_tool`` is not in
+# tools offered at all) or ``expert`` (``generate_new_tool`` is not in
 # the toolkit), because under those modes the instruction would either
 # be meaningless or refer to a tool the VLM cannot call.  Without this
 # nudge the VLM tends to reuse the first tool it ever generated instead

@@ -35,7 +35,7 @@ Usage from notebook::
 
     config = ExperimentConfig(
         model=ModelConfig(litellm_model="azure/gpt-5-mini"),
-        toolkit=ToolkitConfig(mode="static"),
+        toolkit=ToolkitConfig(mode="expert"),
         output=OutputConfig(expt="my_experiment"),
         data_pkl="data_single.pkl",
         max_steps=3,
@@ -48,7 +48,7 @@ Usage from CLI::
         --model.id azure/gpt-5-mini \\
         --data-pkl data_single.pkl \\
         --max-steps 3 \\
-        --toolkit.mode static \\
+        --toolkit.mode expert \\
         --output.expt baseline
 """
 
@@ -653,7 +653,7 @@ def _run_diagnostic_rounds(
                 )
         elif selected_tool_call.name in dynamic_tools:
             # Previously-registered dynamic tool: dispatch via the run-level
-            # dict directly, bypassing the domain's static-tool table.
+            # dict directly, bypassing the domain's expert-tool table.
             try:
                 spec: DynamicToolSpec = dynamic_tools[selected_tool_call.name]
                 tool_result: DiagnosticToolResult = spec.execute(
@@ -794,7 +794,7 @@ def _phase_diagnostic(
 
     tools_for_vlm: List[Dict[str, Any]] = build_tools_list(
         toolkit_mode=deps.toolkit_mode,
-        static_tools=deps.toolkit_reg.get_static_tools(),
+        expert_tools=deps.toolkit_reg.get_expert_tools(),
         dynamic_tools=deps.dynamic_tools,
     )
 
@@ -830,7 +830,7 @@ def _phase_diagnostic(
     # Encourage the VLM to call ``generate_new_tool`` when existing tools
     # don't fit this dataset — but only when the toolkit mode actually
     # offers that tool.  Under ``none`` no tools are offered at all, and
-    # under ``static`` the toolkit is the fixed domain set without
+    # under ``expert`` the toolkit is the fixed domain set without
     # ``generate_new_tool``; in both cases the nudge would be either
     # meaningless or misleading.
     if deps.toolkit_mode is ToolkitMode.generate_only or deps.toolkit_mode is ToolkitMode.dynamic:
@@ -2130,7 +2130,7 @@ def run(
             f"toolkit_mode={config.toolkit.mode.value!r} is not supported for "
             f"domain={config.domain.value!r}. "
             f"This domain does not support dynamic tool generation. "
-            f"Use toolkit_mode='none' or toolkit_mode='static'."
+            f"Use toolkit_mode='none' or toolkit_mode='expert'."
         )
 
     # ── Dataset extraction + progress bar ────────────────────────────────

@@ -2,17 +2,17 @@
 
 Tool Architecture (see ``domains/__init__.py`` module docstring for full details):
 
-    ``TimeSeriesStaticTool(Tool, Registry, ABC)`` is this domain's tool Registry.
+    ``TimeSeriesExpertTool(Tool, Registry, ABC)`` is this domain's tool Registry.
     Each concrete tool (e.g., ``FitVsActuals``, ``GetDominantPeriod``) subclasses it.
     Morphic auto-registers them under their snake_case class name, so
-    ``TimeSeriesStaticTool.of("fit_vs_actuals")`` resolves ``FitVsActuals``.
+    ``TimeSeriesExpertTool.of("fit_vs_actuals")`` resolves ``FitVsActuals``.
 
     ``TimeSeriesToolkit(DomainToolkit)`` is the dispatch class called by
     ``experiments.py``.  Its ``execute_tool()`` delegates to
-    ``TimeSeriesStaticTool.of(selected_tool).execute(...)`` — no if/elif chain.
+    ``TimeSeriesExpertTool.of(selected_tool).execute(...)`` — no if/elif chain.
 
     To add a new time-series tool:
-        1. Define a class that subclasses ``TimeSeriesStaticTool``.
+        1. Define a class that subclasses ``TimeSeriesExpertTool``.
         2. Set ``tool_description``, ``output_type``, ``parameters_schema``.
         3. Implement ``execute()``.
         That's it — no schema constants, no dispatch branches, no wiring.
@@ -46,12 +46,12 @@ logger: logging.Logger = logging.getLogger("domains.time_series.toolkit")
 # ══════════════════════════════════════════════════════════════════════════════
 
 
-class TimeSeriesStaticTool(Tool, Registry, ABC):
-    """Registry of all static time-series diagnostic tools.
+class TimeSeriesExpertTool(Tool, Registry, ABC):
+    """Registry of all expert time-series diagnostic tools.
 
     Concrete subclasses auto-register under their snake_case class name.
-    Use ``TimeSeriesStaticTool.of("fit_vs_actuals")`` to resolve by name,
-    or ``TimeSeriesStaticTool.subclasses()`` to list all registered tools.
+    Use ``TimeSeriesExpertTool.of("fit_vs_actuals")`` to resolve by name,
+    or ``TimeSeriesExpertTool.subclasses()`` to list all registered tools.
     """
 
     pass
@@ -60,7 +60,7 @@ class TimeSeriesStaticTool(Tool, Registry, ABC):
 # ── Concrete tools ────────────────────────────────────────────────────────────
 
 
-class GetDominantPeriod(TimeSeriesStaticTool):
+class GetDominantPeriod(TimeSeriesExpertTool):
     """Extract the dominant period from the time series using autocorrelation."""
 
     tool_description: ClassVar[str] = (
@@ -109,7 +109,7 @@ class GetDominantPeriod(TimeSeriesStaticTool):
         )
 
 
-class FitVsActuals(TimeSeriesStaticTool):
+class FitVsActuals(TimeSeriesExpertTool):
     """Visual inspection of GP fit overlaid on raw time series data."""
 
     tool_description: ClassVar[str] = (
@@ -166,7 +166,7 @@ class FitVsActuals(TimeSeriesStaticTool):
         )
 
 
-class FitVsActualsWithResidualsDistribution(TimeSeriesStaticTool):
+class FitVsActualsWithResidualsDistribution(TimeSeriesExpertTool):
     """Combined plot of fit vs actuals AND the residual distribution."""
 
     tool_description: ClassVar[str] = (
@@ -223,7 +223,7 @@ class FitVsActualsWithResidualsDistribution(TimeSeriesStaticTool):
         )
 
 
-class ResidualsAutoCorrelationPlot(TimeSeriesStaticTool):
+class ResidualsAutoCorrelationPlot(TimeSeriesExpertTool):
     """ACF plot of residuals to check for temporal independence."""
 
     tool_description: ClassVar[str] = (
@@ -280,7 +280,7 @@ class ResidualsAutoCorrelationPlot(TimeSeriesStaticTool):
         )
 
 
-class ResidualsAutoCorrelationScore(TimeSeriesStaticTool):
+class ResidualsAutoCorrelationScore(TimeSeriesExpertTool):
     """Ljung-Box test for residual independence."""
 
     tool_description: ClassVar[str] = (
@@ -441,14 +441,14 @@ def _get_dominant_period(series: Any) -> Optional[str]:
 class TimeSeriesToolkit(DomainToolkit):
     """Toolkit dispatch for time-series GP fitting.
 
-    Delegates tool execution to ``TimeSeriesStaticTool.of(selected_tool)``.
+    Delegates tool execution to ``TimeSeriesExpertTool.of(selected_tool)``.
     The if/elif chain is replaced by Registry lookup.
     """
 
     aliases: ClassVar[List[str]] = DOMAIN_ALIASES
 
-    def get_static_tools(self) -> List[Dict[str, Any]]:
-        return [tool_cls.to_openai_schema() for tool_cls in TimeSeriesStaticTool.subclasses()]
+    def get_expert_tools(self) -> List[Dict[str, Any]]:
+        return [tool_cls.to_openai_schema() for tool_cls in TimeSeriesExpertTool.subclasses()]
 
     def supports_dynamic_generation(self) -> bool:
         return True
@@ -510,13 +510,13 @@ class TimeSeriesToolkit(DomainToolkit):
                 ],
             )
 
-        tool: Optional[TimeSeriesStaticTool]
+        tool: Optional[TimeSeriesExpertTool]
         try:
-            tool = TimeSeriesStaticTool.of(selected_tool)
+            tool = TimeSeriesExpertTool.of(selected_tool)
         except KeyError:
             logger.debug(
-                f"Tool {selected_tool!r} not in TimeSeriesStaticTool registry. "
-                f"Available: {[cls.tool_name for cls in TimeSeriesStaticTool.subclasses()]}"
+                f"Tool {selected_tool!r} not in TimeSeriesExpertTool registry. "
+                f"Available: {[cls.tool_name for cls in TimeSeriesExpertTool.subclasses()]}"
             )
             tool = None
 
@@ -528,19 +528,19 @@ class TimeSeriesToolkit(DomainToolkit):
                 fit_path=fit_path,
                 selected_tool_args=selected_tool_args,
             )
-            static_description: str = plot_type_descriptions.get(
+            expert_description: str = plot_type_descriptions.get(
                 tool_result.tool_name,
                 tool_result.tool_description,
             )
             return DiagnosticToolResult(
                 tool_name=tool_result.tool_name,
-                tool_description=static_description,
+                tool_description=expert_description,
                 artifacts=tool_result.artifacts,
             )
 
         raise ValueError(
-            f"Unknown static tool {selected_tool!r} for time-series. "
-            f"Available: {[cls.tool_name for cls in TimeSeriesStaticTool.subclasses()]}. "
+            f"Unknown expert tool {selected_tool!r} for time-series. "
+            f"Available: {[cls.tool_name for cls in TimeSeriesExpertTool.subclasses()]}. "
             f"If this was meant to be a dynamic tool, the pipeline should have "
             f"dispatched it via deps.dynamic_tools before reaching execute_tool()."
         )

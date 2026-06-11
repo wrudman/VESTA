@@ -14,13 +14,13 @@ clear && python run_boxlm_elpd_eval.py --model claude --dataset easy_50
 clear && python run_boxlm_elpd_eval.py --model gpt --dataset easy_50
 clear && python run_boxlm_elpd_eval.py --model kimi --dataset easy_50
 
-# Medium: dataset_ts_medium_110. The wrapper resolves and concatenates all three
+# Hard: dataset_ts_hard_110. The wrapper resolves and concatenates all three
 # shards for each model: 0:50, 50:100, and 100:110.
-clear && python run_boxlm_elpd_eval.py --model claude --dataset medium_110
-clear && python run_boxlm_elpd_eval.py --model gpt --dataset medium_110
-clear && python run_boxlm_elpd_eval.py --model kimi --dataset medium_110
+clear && python run_boxlm_elpd_eval.py --model claude --dataset hard_110
+clear && python run_boxlm_elpd_eval.py --model gpt --dataset hard_110
+clear && python run_boxlm_elpd_eval.py --model kimi --dataset hard_110
 
-# Hard: dataset_ts_gravitational_chirp_50
-clear && python run_boxlm_elpd_eval.py --model claude --dataset gravitational_chirp_50
-clear && python run_boxlm_elpd_eval.py --model gpt --dataset gravitational_chirp_50
-clear && python run_boxlm_elpd_eval.py --model kimi --dataset gravitational_chirp_50
+# Astro: dataset_ts_astro_chirp_50
+clear && python run_boxlm_elpd_eval.py --model claude --dataset astro_chirp_50
+clear && python run_boxlm_elpd_eval.py --model gpt --dataset astro_chirp_50
+clear && python run_boxlm_elpd_eval.py --model kimi --dataset astro_chirp_50

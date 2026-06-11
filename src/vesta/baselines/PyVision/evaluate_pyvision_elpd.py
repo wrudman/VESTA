@@ -12,8 +12,8 @@ Usage:
   python evaluate_pyvision_elpd.py pyvision-ts-runs/pyvision_gpt_output_single_ts_results_ts.csv \
       --dataset-pkl datasets_time_series/dataset_ts_easy_50.pkl
 
-  python evaluate_pyvision_elpd.py pyvision-ts-runs/pyvision_claude_output_chirp_ts_results_ts.csv \
-      --dataset-pkl datasets_time_series/dataset_ts_gravitational_chirp_50.pkl \
+  python evaluate_pyvision_elpd.py pyvision-ts-runs/pyvision_claude_output_astro_chirp_ts_results_ts.csv \
+      --dataset-pkl datasets_time_series/dataset_ts_astro_chirp_50.pkl \
       --max-obs 120 --draws 200 --tune 200 --chains 2 --cores 2
 
 Output:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# # Medium Time-Series Dataset Generator
+# # Hard Time-Series Dataset Generator
 # 
 # Generates 150 synthetic time series across 6 signal types, then filters out
 # simple Sine waves to produce a 110-sample dataset.
@@ -157,11 +157,11 @@ def generate_series(series_id, n_points=N_POINTS):
 
     return {
         'series_id': series_id,
-        'unique_id': f'ts_medium_s{series_id:03d}',
+        'unique_id': f'ts_hard_s{series_id:03d}',
         'category': category,
         'name': name,
         'anomaly_info': 'No anomalies',
-        'source_path': 'generated/time_series_medium_dataset_v3',
+        'source_path': 'generated/time_series_hard_dataset_v3',
         'data': series,
     }
 
@@ -205,7 +205,7 @@ for i, sample in enumerate(full_dataset):
         continue
     new_sample = dict(sample)
     new_sample['series_id'] = len(filtered_dataset)
-    new_sample['unique_id'] = f'ts_medium_s{len(filtered_dataset):03d}'
+    new_sample['unique_id'] = f'ts_hard_s{len(filtered_dataset):03d}'
     filtered_dataset.append(new_sample)
 
 print(f"Filtered dataset size: {len(filtered_dataset)}")
@@ -250,13 +250,13 @@ plt.show()
 
 # ## 6. Save (disabled — uncomment to write)
 # 
-# Output: `dataset_ts_medium_<size>.pkl`
+# Output: `dataset_ts_hard_<size>.pkl`
 
 
 import pickle
 from pathlib import Path
 
-output_path = Path(f'dataset_ts_medium_{len(filtered_dataset)}.pkl')
+output_path = Path(f'dataset_ts_hard_{len(filtered_dataset)}.pkl')
 with open(output_path, 'wb') as f:
     pickle.dump(filtered_dataset, f)
 print(f'Saved {len(filtered_dataset)} samples to {output_path}')

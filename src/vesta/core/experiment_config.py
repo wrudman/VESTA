@@ -16,7 +16,7 @@ CLI usage (auto-generated from field definitions)::
         --model.id azure/gpt-5-mini \\
         --data-pkl data_single.pkl \\
         --max-steps 3 \\
-        --toolkit.mode static \\
+        --toolkit.mode expert \\
         --output.expt baseline
 
 Notebook usage::
@@ -26,7 +26,7 @@ Notebook usage::
 
     config = ExperimentConfig(
         model=ModelConfig(litellm_model="azure/gpt-5-mini"),
-        toolkit=ToolkitConfig(mode="static"),
+        toolkit=ToolkitConfig(mode="expert"),
         output=OutputConfig(expt="my_experiment"),
         data_pkl="data_single.pkl",
         max_steps=3,
@@ -386,7 +386,7 @@ class ToolkitConfig(Typed):
                 "toolkit.mode='accumulated_only' requires explicitly passing "
                 "--toolkit.tool-registry-filename. This mode evaluates only persisted "
                 "dynamic tools from that registry file; it does not generate tools and "
-                "does not use static expert tools."
+                "does not use expert tools."
             )
         return data
 

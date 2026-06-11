@@ -27,45 +27,45 @@ python run.py --task box_loop_ts --data dataset_ts_easy_50.pkl --dataset-idx "0:
 python run.py --task box_loop_ts --data dataset_ts_easy_50.pkl --dataset-idx "0:50" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 10 --parallel.max-rpm 10 --output box_loop_ts_easy_gpt54_mini
 
 # =============================================================================
-# Medium: dataset_ts_medium_110
-# =============================================================================
-
-# Medium - Claude Sonnet 4.6 - 0:50
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_medium_claude_sonnet46
-
-# Medium - Claude Sonnet 4.6 - 50:100
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "50:100" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_medium_claude_sonnet46_50to100
-
-# Medium - Claude Sonnet 4.6 - 100:110
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "100:110" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 2 --parallel.max-rpm 30 --output box_loop_ts_medium_claude_sonnet46_100to110
-
-# Medium - Kimi K2.5 - 0:50
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_medium_kimi25
-
-# Medium - Kimi K2.5 - 50:100
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "50:100" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_medium_kimi25_50to100
-
-# Medium - Kimi K2.5 - 100:110
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "100:110" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 2 --parallel.max-rpm 30 --output box_loop_ts_medium_kimi25_100to110
-
-# Medium - GPT-5.4 Mini - 0:50
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "0:50" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 10 --parallel.max-rpm 10 --output box_loop_ts_medium_gpt54_mini
-
-# Medium - GPT-5.4 Mini - 50:100
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "50:100" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 10 --parallel.max-rpm 10 --output box_loop_ts_medium_gpt54_mini_50to100
-
-# Medium - GPT-5.4 Mini - 100:110
-python run.py --task box_loop_ts --data dataset_ts_medium_110.pkl --dataset-idx "100:110" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 2 --parallel.max-rpm 10 --output box_loop_ts_medium_gpt54_mini_100to110
-
-# =============================================================================
-# Hard: dataset_ts_gravitational_chirp_50
+# Hard: dataset_ts_hard_110
 # =============================================================================
 
 # Hard - Claude Sonnet 4.6 - 0:50
-python run.py --task box_loop_ts --data dataset_ts_gravitational_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_gravitational_chirp_claude_sonnet46
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_hard_claude_sonnet46
+
+# Hard - Claude Sonnet 4.6 - 50:100
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "50:100" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_hard_claude_sonnet46_50to100
+
+# Hard - Claude Sonnet 4.6 - 100:110
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "100:110" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 2 --parallel.max-rpm 30 --output box_loop_ts_hard_claude_sonnet46_100to110
 
 # Hard - Kimi K2.5 - 0:50
-python run.py --task box_loop_ts --data dataset_ts_gravitational_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_gravitational_chirp_kimi25
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_hard_kimi25
+
+# Hard - Kimi K2.5 - 50:100
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "50:100" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_hard_kimi25_50to100
+
+# Hard - Kimi K2.5 - 100:110
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "100:110" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 2 --parallel.max-rpm 30 --output box_loop_ts_hard_kimi25_100to110
 
 # Hard - GPT-5.4 Mini - 0:50
-python run.py --task box_loop_ts --data dataset_ts_gravitational_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 10 --parallel.max-rpm 10 --output box_loop_ts_gravitational_chirp_gpt54_mini
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "0:50" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 10 --parallel.max-rpm 10 --output box_loop_ts_hard_gpt54_mini
+
+# Hard - GPT-5.4 Mini - 50:100
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "50:100" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 10 --parallel.max-rpm 10 --output box_loop_ts_hard_gpt54_mini_50to100
+
+# Hard - GPT-5.4 Mini - 100:110
+python run.py --task box_loop_ts --data dataset_ts_hard_110.pkl --dataset-idx "100:110" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 2 --parallel.max-rpm 10 --output box_loop_ts_hard_gpt54_mini_100to110
+
+# =============================================================================
+# Astro: dataset_ts_astro_chirp_50
+# =============================================================================
+
+# Astro - Claude Sonnet 4.6 - 0:50
+python run.py --task box_loop_ts --data dataset_ts_astro_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/anthropic/claude-sonnet-4.6" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_astro_chirp_claude_sonnet46
+
+# Astro - Kimi K2.5 - 0:50
+python run.py --task box_loop_ts --data dataset_ts_astro_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --model "openrouter/moonshotai/kimi-k2.5" --nproc 10 --parallel.max-rpm 30 --output box_loop_ts_astro_chirp_kimi25
+
+# Astro - GPT-5.4 Mini - 0:50
+python run.py --task box_loop_ts --data dataset_ts_astro_chirp_50.pkl --dataset-idx "0:50" --rounds 5 --model "azure/gpt-5.4-mini" --nproc 10 --parallel.max-rpm 10 --output box_loop_ts_astro_chirp_gpt54_mini
