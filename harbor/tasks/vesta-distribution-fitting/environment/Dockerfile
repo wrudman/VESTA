@@ -5,8 +5,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install VESTA from local source (baked into image at build time)
-COPY src /tmp/vesta-src
+COPY src /tmp/vesta-src/src
 COPY pyproject.toml /tmp/vesta-src/pyproject.toml
+COPY README.md /tmp/vesta-src/README.md
+COPY LICENSE /tmp/vesta-src/LICENSE
 RUN cd /tmp/vesta-src && pip install --no-cache-dir . && rm -rf /tmp/vesta-src
 
 RUN mkdir -p /app /output
