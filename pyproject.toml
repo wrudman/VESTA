@@ -1,14 +1,64 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
 [project]
-name = "pymc_model_selection"
+name = "vesta"
 version = "0.1.0"
+authors = [
+    { name = "Abhishek Divekar", email = "adivekar@utexas.edu" },
+]
+description = "VLM-guided PyMC model selection for distribution fitting and time-series forecasting"
+readme = "README.md"
 requires-python = ">=3.10"
+license-files = ["LICENSE"]
+keywords = [
+    "llm",
+    "vlm",
+    "pymc",
+    "model-selection",
+    "distribution-fitting",
+    "time-series",
+    "bayesian",
+]
 dependencies = [
     "pandas>=2.3.3",
     "pyarrow>=24.0.0",
+    "numpy>=2.0.0",
+    "scipy>=1.14.0",
+    "pymc>=5.28.1",
+    "pytensor>=2.38.2",
+    "litellm>=1.82.0",
+    "slowburn>=0.5.6",
+    "concurry>=0.13.0",
+    "morphic>=0.2.1",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.2.2",
+    "matplotlib>=3.9.0",
+    "scikit-learn>=1.5.0",
+    "statsmodels>=0.14.0",
 ]
 
+[project.optional-dependencies]
+vllm = ["ray>=2.0.0", "vllm>=0.6.0"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-timeout>=2.0",
+    "ruff>=0.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/adivekar-utexas/VESTA"
+Repository = "https://github.com/adivekar-utexas/VESTA"
+Issues = "https://github.com/adivekar-utexas/VESTA/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vesta"]
+
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
 testpaths = ["tests"]
 timeout = 360
 markers = [
@@ -22,3 +72,6 @@ fix = true
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 ignore = ["E731", "E741"]
+
+[project.scripts]
+vesta = "vesta.cli:main"

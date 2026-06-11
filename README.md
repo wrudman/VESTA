@@ -1,222 +1,150 @@
-# VESTA
+<div align="center">
 
-# WARNING: REPO STILL UNDER CONSTRUCTION
+# VESTA: Visual Exploration with Statistical Tool Agents
 
-VLM-guided PyMC model selection for distribution fitting and time-series
-forecasting.  An LLM iteratively proposes model structures (distribution
-families, GP kernels, priors), generates the PyMC code, and a scoring
-loop picks the best fit by AIC.  See `experiments.py` for the full
-pipeline.
+Authors: William Rudman\*, Abhishek Divekar\*, Kanishk Jain\*, Sebastian Joseph, Stella S. R. Offner, Matthew Lease, Kyle Mahowald, Greg Durrett, Junyi Jessy Li
 
-## Installation
+<sub>\*Equal contribution. The University of Texas at Austin, New York University.</sub>
 
-### macOS / cross-platform default
+[![arXiv](https://img.shields.io/badge/arXiv-2606.00384-b31b1b.svg)](https://arxiv.org/abs/2606.00384)
+[![alphaXiv](https://img.shields.io/badge/alphaXiv-2606.00384-1e90ff.svg)](https://alphaxiv.org/abs/2606.00384)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Harbor](https://img.shields.io/badge/Harbor-task%20%26%20environment-2496ed.svg)](harbor/tasks/vesta-distribution-fitting/)
 
-```bash
-conda create -n pymc python=3.13
-conda activate pymc
-uv pip install -r requirements.txt
-```
+</div>
 
-On macOS this links NumPy/SciPy against Apple's Accelerate framework
-automatically, which is already highly optimized for GP Cholesky workloads
-— no extra setup needed.
+<hr />
 
-### Linux x86_64 with Intel MKL (recommended for production sweeps)
+## Overview
 
-On Linux x86_64 (Ubuntu / Debian / RHEL / Fedora / Amazon Linux, glibc ≥
-2.27), install the base requirements *and* the MKL delta:
+<p align="center">
+  <img src="images/intro_fig-v2.png" width="95%" alt="Overview of VESTA"/>
+</p>
 
-```bash
-conda create -n pymc python=3.13
-conda activate pymc
+> **Abstract:** *Fitting quantitative models to data is a central step in scientific workflows, yet it remains one of the least automated. Recent agent-based systems leverage language and vision-language models (VLMs) to iteratively propose and refine statistical models, but these systems struggle on more challenging modeling tasks. To address these limitations, we introduce VESTA (Visual Exploration with Statistical Tool Agents), a framework that equips VLMs with a dynamically growing exploration toolkit to guide model refinement through data transformations, hypothesis-driven visualizations, and robust statistical tests. Unlike prior systems that rely on iterative critique alone, VESTA actively explores data before and during refinement by selecting or creating diagnostic tools, which accumulate in the model's context and can be reused later. We evaluate VESTA against established baselines in three toolkit configurations: no tools, static expert-written tools, and dynamic model-written tools. To support this evaluation, we introduce DAWN (Dataset for Automated Workflows and Numerical Modeling), a benchmark targeting distribution fitting and time series modeling with varying difficulty tiers, and culminating in real-world astronomy tasks including modeling initial mass functions and gravitational-wave chirp signals. We find that VESTA's dynamic tool creation outperforms prior agentic pipelines, with the largest gains on complex and domain-specific tasks. We further show that dynamically generated tools are substantially more sophisticated than those produced by existing visual tool-creation systems, covering more diagnostic categories per function and strongly preferring visual outputs that the VLM critic can reason over directly.*
 
-# 1. Base cross-platform deps (installs NumPy/SciPy with vendored OpenBLAS)
-uv pip install -r requirements.txt
+The figure above shows VESTA's four-phase iteration loop: **Propose** candidate model structures from a data visualization, **Tool Manager** selects an existing diagnostic or dynamically generates a new Python function, **Critique** passes the tool's visual output back to the VLM to refine the model, and **Summarize** compresses each iteration's output so the next prompt can reason over the full trajectory without unbounded context growth.
 
-# 2. Swap NumPy/SciPy for MKL-linked wheels and install Intel MKL runtime.
-#    See the header of requirements-extra-mkl.txt for why these flags are needed.
-uv pip install \
-    --reinstall-package numpy --reinstall-package scipy \
-    --index-strategy unsafe-best-match \
-    -r requirements-extra-mkl.txt
-```
+Key findings:
 
-Verify the swap worked:
+- **VESTA with expert tools achieves the strongest overall performance** on DAWN, and VESTA with dynamic tools outperforms all prior agentic baselines (PyVision, Box-LM).
+- VESTA **independently recovers expert-written tools** and composes them into more sophisticated diagnostics that test multiple hypotheses simultaneously.
+- Dynamically generated tools **cover more diagnostic categories** per function and strongly prefer visual outputs that the VLM critic can reason over directly.
 
-```bash
-python -c "from threadpoolctl import threadpool_info; \
-           [print(d['prefix'], d.get('threading_layer')) for d in threadpool_info()]"
-```
 
-You should see `libmkl_rt intel` and `libiomp None`, *not*
-`libscipy_openblas pthreads`.  If you see the latter, the MKL wheels did
-not take effect — re-run the second `uv pip install` command and check
-the `--index-strategy` flag.
+## Results
 
-### Other platforms
+<p align="center">
+  <img src="images/js_elpd_bar.png" width="95%" alt="Jensen-Shannon divergence results"/>
+</p>
 
-  * **Linux ARM64** (AWS Graviton, Ampere, Raspberry Pi): use only
-    `requirements.txt`.  MKL is Intel-only and will not install.  The
-    vendored OpenBLAS in the PyPI wheels works, but make sure the thread
-    cap (below) is applied.
-  * **Windows**: use only `requirements.txt`.  MKL on Windows is
-    possible in principle but the urob/numpy-mkl wheels have not been
-    tested there.
-  * **Linux x86_64 without MKL**: use only `requirements.txt`.  The
-    vendored OpenBLAS will be thread-capped automatically (below).
+The figure above shows average Jensen-Shannon divergence on the distribution fitting task (lower is better). VESTA with expert-written tools achieves the strongest overall performance, and VESTA with dynamically generated tools outperforms PyVision and Box-LM across all three difficulty splits (Easy, Hard, Astro).
 
-## Pre-import environment setup (critical for Linux)
+For time series modeling, we measure Expected Log Predictive Density (ELPD). VESTA outperforms PyVision and Box-LM across all splits, with the largest gains on the Astro split, where the task is to model gravitational-wave chirp signals. The paper reports the full per-LLM results and significance tests.
 
-`experiments.py` has two "must import first" modules that mutate
-`os.environ` before NumPy / SciPy / PyMC / PyTensor load:
 
-### `_thread_caps.py` — BLAS / OpenMP thread caps
+## DAWN Benchmark
 
-On Linux, NumPy and SciPy wheels ship with a pthread-backend OpenBLAS
-that defaults to one worker thread per logical CPU.  Combined with
-PyTensor's OpenMP-compiled C-Ops (`-fopenmp` / libgomp), this produces
-catastrophic thread contention for PyMC GP `find_MAP` workloads — a
-20-second fit can turn into a multi-hour hang on a 16-core server.  See
-[OpenBLAS#3187](https://github.com/OpenMathLib/OpenBLAS/issues/3187)
-and [pymc#6640](https://github.com/pymc-devs/pymc/issues/6640) for the
-underlying issue.
+DAWN (Dataset for Automated Workflows and Numerical Modeling) is a benchmark for evaluating automated model fitting systems across two domains central to data science and scientific research.
 
-[`_thread_caps.py`](./_thread_caps.py) sets `OPENBLAS_NUM_THREADS=1`,
-`OMP_NUM_THREADS=1`, etc. *before* NumPy / SciPy / PyMC / PyTensor load.
-You do not need to export these variables manually.
+<p align="center">
+  <img src="images/data_ex.png" width="95%" alt="DAWN dataset examples"/>
+</p>
 
-Controlled via the `PYMC_PARALLEL__COMPUTE_THREADS` environment variable
-(the pydantic-settings form of `ExperimentConfig.parallel.compute_threads`):
+### Domains
 
-| Value  | Effect                                                    |
-|--------|-----------------------------------------------------------|
-| unset  | cap all BLAS / OpenMP vars to 1 (default, recommended).   |
-| `N≥0`  | cap to `max(N, 1)` — use `N=4` etc. for large-matrix work.|
-| `-1`   | opt-out sentinel; leave env vars untouched.               |
+**Distribution Fitting.** Identify the probability distribution that best explains observed data. Models are specified in PyMC and evaluated by Jensen-Shannon divergence to a ground truth.
 
-Explicit per-variable shell overrides (e.g.
-`OPENBLAS_NUM_THREADS=4 python experiments.py …`) always win, because
-`_thread_caps.py` uses `os.environ.setdefault`.
+**Time Series Modeling.** Construct Gaussian Process models that capture trend, seasonality, and non-stationarity. Models are evaluated by Expected Log Predictive Density (ELPD) on held-out data.
 
-### `_pytensor_compiledir.py` — per-invocation PyTensor compile directory
+### Difficulty Tiers
 
-When multiple concurrent `experiments.py` invocations run on the same
-machine (e.g. 6 parallel shell jobs, each with `--parallel.nproc 2`, for
-a total of 12 child processes), they all share PyTensor's default
-`~/.pytensor/compiledir_<platform>/` directory and contend for its
-file lock.  Above ~10 concurrent cold-cache compilations the lock hits
-its default 120s timeout and raises:
+Each domain contains three difficulty splits:
 
-```
-filelock.Timeout: The file lock '…/.lock' could not be acquired.
-```
+- **Easy:** Single, well-known distributions (Gaussian, Lognormal, Student-t, Exponential, Uniform, Weibull, Laplace, Cauchy, Pareto) for distribution fitting; linear trends with simple periodic components for time series.
+- **Hard:** Mixtures of two distributions; complex non-linear dynamics including ARIMA, S-curves, ECG signals, and square waves.
+- **Astro:** Real-world astronomy tasks drawn from active research:
+  - **Initial Mass Functions (IMFs):** Stellar mass distributions modeled by Salpeter, Kroupa, Chabrier, plus two freeform variants (tight and wide broken power laws).
+  - **Gravitational Wave Chirps:** Linearly swept-frequency signals from merging binary star systems, with optional inspiral ringdown envelopes.
 
-See [pymc#6818](https://github.com/pymc-devs/pymc/issues/6818) and
-[Theano#4858](https://github.com/Theano/Theano/issues/4858) for the
-underlying issue.
+### Evaluation Metrics
 
-[`_pytensor_compiledir.py`](./_pytensor_compiledir.py) prepends
-`base_compiledir=~/.pytensor_jobs/pid_<parent_pid>_boot_<mtime>/` to
-`PYTENSOR_FLAGS` before PyTensor imports.  Each top-level invocation
-gets its own directory keyed on the parent process PID (so child
-processes spawned by `--parallel.nproc` inherit the same compiledir via
-`os.environ` and benefit from within-invocation cache reuse).
-Concurrent invocations never share a lock.
+- **Jensen-Shannon Divergence** (distribution fitting): symmetric, bounded in [0, 1], with 0 indicating identical distributions.
+- **ELPD LOO** (time series): Expected Log Predictive Density computed via PSIS-LOO cross-validation.
 
-Controlled via two environment variables:
+DAWN problems are synthetically generated, so the true data-generating distribution is known and model fit can be measured directly against it. Prior benchmarks often contain only a small number of distributions with few data points; DAWN covers a wider range of families and difficulty.
 
-| Variable                           | Effect                                                            |
-|------------------------------------|-------------------------------------------------------------------|
-| `PYMC_PYTENSOR_COMPILEDIR_ROOT`    | Root directory for per-invocation subdirs. Default `~/.pytensor_jobs`. |
-| `PYTENSOR_FLAGS=base_compiledir=…` | If already set, takes precedence (user override wins).            |
 
-**Disk cost**: each invocation's compiledir holds ~50–500 MB of compiled
-`.so` modules.  They accumulate under `~/.pytensor_jobs/` and are safe
-to delete between experiment batches:
+## Running VESTA
+
+VESTA ships as a [Harbor](https://github.com/harbor-framework/harbor) task. Harbor provides containerized, reproducible environments for running VESTA benchmarks.
+
+### Quickstart
 
 ```bash
-rm -rf ~/.pytensor_jobs
+# Install Harbor
+pip install harbor
+
+# Run VESTA on the DAWN distribution fitting task
+harbor run --task harbor/tasks/vesta-distribution-fitting/ \
+    --env-file .env
 ```
 
-**Opt-out** (share a single compile cache across all invocations — useful
-when running sequentially and you want cache hits across runs):
+The task handles: building the Docker environment (Python 3.13, PyMC, VESTA, all dependencies), loading the dataset, running the VLM-guided fitting pipeline, and scoring results.
+
+### What the Harbor task does
+
+1. **Builds a container** with Python 3.13, PyMC, and all VESTA dependencies
+2. **Loads your dataset** (baked into the container or mounted at runtime)
+3. **Runs VESTA's refinement loop**: diagnostic tools → model proposal → code generation → fitting → summary
+4. **Verifies results** by checking that VESTA completed successfully and produced a valid report
+
+### Task structure
+
+```
+harbor/tasks/vesta-distribution-fitting/
+├── task.toml              # Task config (timeouts, resources, metadata)
+├── instruction.md         # Natural language instructions for the agent
+├── data/data.parquet      # Test dataset
+├── environment/Dockerfile # Container image with VESTA + dependencies
+├── tests/test.sh          # Verifier (writes reward to /logs/verifier/reward.txt)
+└── solution/solve.sh      # Reference implementation
+```
+
+## Development
+
+For working on VESTA itself, install from source:
 
 ```bash
-PYTENSOR_FLAGS='base_compiledir=~/.pytensor' python experiments.py …
+git clone https://github.com/adivekar-utexas/VESTA
+cd VESTA
+pip install -e ".[dev]"
 ```
 
-## Running experiments
+This installs VESTA as an editable package. The core pipeline lives in
+`src/vesta/core/`, with domain-specific code in `src/vesta/domains/`.
 
-### Single dataset (debugging)
+## Architecture
 
-```bash
-python experiments.py --domain time-series --pytensor-mode FAST_RUN \
-    --data-pkl dataset_ts_no_anomaly_medium.pkl --dataset-idx "0" \
-    --max-steps 5 --verbosity 1 \
-    --model.id "azure/gpt-5.4-mini" --model.call-timeout 300 \
-    --toolkit.mode generate_only \
-    --toolkit.code-gen-model "azure/gpt-5.4-mini" \
-    --toolkit.force-tool-call \
-    --parallel.nproc 0 --parallel.nthread 0 --parallel.max-rpm 120 \
-    --output.expt ts_debug
-```
+VESTA uses vision-language models (VLMs) to iteratively propose, refine, and
+evaluate statistical models through dynamic tool creation. The architecture has
+four components per iteration:
 
-### Full parallel sweep (production)
+1.  **Propose:** From a visualization of the data (and previous diagnostic
+    outputs), the VLM proposes candidate model structures.
+2.  **Tool Manager:** VESTA selects an existing diagnostic tool, or dynamically
+    generates Python code for a new one in a sandboxed environment.
+3.  **Critique:** The VLM reads the tool's visual output and refines the model
+    by proposing revised candidates.
+4.  **Summarize:** VESTA compresses each iteration's output into a structured
+    summary. The next prompt then reasons over the full refinement trajectory
+    without unbounded context growth.
 
-For a dataset with N series on a machine with C cores, run one process
-per core with single-threaded BLAS.  Each child inherits
-`OPENBLAS_NUM_THREADS=1` from the parent (set by `_thread_caps.py`), so
-the C processes fit independent datasets in parallel with zero BLAS
-contention:
+VESTA is built on **PyMC** (probabilistic programming), **LiteLLM + SlowBurn**
+(multi-provider LLM orchestration), **Morphic** (Typed + Registry models), and
+**Concurry** (parallel execution).
 
-```bash
-python experiments.py --domain time-series --pytensor-mode FAST_RUN \
-    --data-pkl dataset_ts_no_anomaly_medium.pkl \
-    --max-steps 5 --verbosity 1 \
-    --model.id "azure/gpt-5.4-mini" --model.call-timeout 300 \
-    --toolkit.mode generate_only \
-    --toolkit.code-gen-model "azure/gpt-5.4-mini" \
-    --toolkit.force-tool-call \
-    --parallel.nproc 16 --parallel.nthread 0 \
-    --parallel.max-rpm 1920 \
-    --output.expt ts_genonly_forced
-```
+## License
 
-Key flags:
-
-  * `--parallel.nproc 16` — one child process per core on a 16-core box.
-  * `--parallel.nthread 0` — no inner thread pool (sync within each child).
-  * `--parallel.max-rpm 1920` — total LLM RPM budget across all children;
-    divided automatically by `nproc × max(nthread, 1)` to get per-child RPM.
-    Tune to your Azure / OpenAI quota.
-  * Drop `--dataset-idx "0"` to process every series in the pkl.
-
-Expected throughput scaling on 16 cores is near-linear (≈14-16× vs
-sequential) because each child does single-threaded BLAS, so the `C`
-children fit without stepping on each other.
-
-## Reproducing the original BLAS-contention hang
-
-If you want to see the failure mode that motivated the thread-cap work,
-`repro_stuck_model.py` runs three exact LLM-generated GP models that
-hung in the original report:
-
-```bash
-# Default — uses the thread cap (fast, ~100s wall on Linux x86_64).
-python repro_stuck_model.py --models 0,1,2 --timeout 900 --pytensor-mode FAST_RUN
-
-# Opt out — reproduces the thread-contention behaviour.
-PYMC_PARALLEL__COMPUTE_THREADS=-1 \
-    python repro_stuck_model.py --models 0,1,2 --timeout 900 --pytensor-mode FAST_RUN
-```
-
-The `[env]` block printed at the top of each run shows which BLAS is
-loaded and how many threads each pool is configured for, so you can
-visually confirm the cap is in effect.
-
-## Tests
-
-```bash
-python -m pytest tests/ -x -q
-```
+MIT

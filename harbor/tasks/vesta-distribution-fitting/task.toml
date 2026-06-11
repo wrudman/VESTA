@@ -1,0 +1,32 @@
+schema_version = "1.1"
+
+[task]
+name = "adivekar/vesta-distribution-fitting"
+description = "Fit a Bayesian distribution to data using VESTA's VLM-guided model selection"
+keywords = ["pymc", "bayesian", "distribution-fitting", "vlm"]
+
+[[task.authors]]
+name = "Abhishek Divekar"
+email = "adivekar@utexas.edu"
+
+[metadata]
+difficulty = "hard"
+category = "modeling"
+tags = ["pymc", "bayesian", "distribution-fitting", "vlm"]
+
+[verifier]
+timeout_sec = 600.0
+
+[agent]
+timeout_sec = 600.0
+
+[environment]
+build_timeout_sec = 1200.0
+cpus = 4
+memory_mb = 8192
+storage_mb = 20480
+allow_internet = true
+
+[verifier.env]
+
+[environment.env]
