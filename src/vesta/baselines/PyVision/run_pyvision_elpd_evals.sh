@@ -49,7 +49,7 @@ for i in "${!CSV_FILES[@]}"; do
         echo "  (elapsed: ${elapsed}s, ETA: ~${remaining}m)"
     fi
 
-    conda run -n pymc_model_selection python evaluate_pyvision_elpd.py \
+    conda run -n vesta python evaluate_pyvision_elpd.py \
         "${csv_path}" \
         --dataset-pkl "${pkl_path}" \
         --output-dir "${out_dir}" \

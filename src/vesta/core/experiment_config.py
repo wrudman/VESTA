@@ -21,7 +21,8 @@ CLI usage (auto-generated from field definitions)::
 
 Notebook usage::
 
-    from experiment_config import ExperimentConfig, ModelConfig, ToolkitConfig, OutputConfig
+    from vesta import ExperimentConfig
+    from vesta.core.experiment_config import ModelConfig, ToolkitConfig, OutputConfig
 
     config = ExperimentConfig(
         model=ModelConfig(litellm_model="azure/gpt-5-mini"),
@@ -87,7 +88,14 @@ class ModelConfig(Typed):
         ),
     )
     litellm_params: Optional[Dict[str, Any]] = Field(
-        default=None, description="Extra provider-specific LiteLLM params (notebook only)"
+        default=None,
+        description=(
+            "Extra provider-specific LiteLLM params forwarded verbatim to the "
+            "backend. These take precedence over the reasoning_effort/api_base "
+            "params computed from the other fields: any key passed here "
+            "overrides the computed value. Pass from a Harbor config, the CLI, "
+            "or a notebook to override or disable any provider behavior."
+        ),
     )
 
     @classmethod
@@ -185,10 +193,14 @@ class ModelConfig(Typed):
         - Native Anthropic: ``output_config`` (compatible with forced
           tool use).
         - Everything else: plain ``reasoning_effort`` string.
+
+        User-supplied ``litellm_params`` always take precedence: the
+        provider-specific reasoning/api_base params are computed first, then
+        any keys present in ``self.litellm_params`` overwrite them. This lets a
+        caller (Harbor config, CLI, or notebook) override or disable any
+        computed param by passing the same key explicitly.
         """
         merged_litellm_params: Dict[str, Any] = {}
-        if self.litellm_params is not None:
-            merged_litellm_params.update(self.litellm_params)
 
         if self._is_openrouter_sonnet_4_6():
             self._add_openrouter_sonnet_reasoning(merged_litellm_params=merged_litellm_params)
@@ -217,6 +229,12 @@ class ModelConfig(Typed):
         if self.api_base is not None:
             merged_litellm_params["api_base"] = self.api_base
             merged_litellm_params["custom_llm_provider"] = "openai"
+
+        # User-supplied litellm_params always win: apply them last so any key
+        # the caller passes (e.g. reasoning_effort, extra_body, api_base)
+        # overrides the provider-specific value computed above.
+        if self.litellm_params is not None:
+            merged_litellm_params.update(self.litellm_params)
 
         return merged_litellm_params
 
@@ -347,7 +365,7 @@ class ToolkitConfig(Typed):
     tool_registry_filename: str = Field(
         default="tool_registry.json",
         description=(
-            "Filename (relative to the pymc_model_selection package directory) "
+            "Filename (relative to the vesta package directory) "
             "for persisting dynamic tools across runs. Only consulted when "
             "accumulate_tools is set; each run seeds its dynamic_tools dict "
             "from this file at start and writes it back at end."

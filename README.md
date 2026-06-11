@@ -97,6 +97,22 @@ harbor run \
 
 `.env` must hold the API keys for your LLM provider (see `.env.example`). The task builds the Docker environment (Python 3.13, PyMC, VESTA, all dependencies), loads the dataset, runs the VLM-guided fitting pipeline, and scores the result with the verifier.
 
+### Choosing a model and overriding LLM params
+
+The reference solution reads two optional environment variables, so you can switch providers/models without editing any code:
+
+| Variable | Purpose | Example |
+|---|---|---|
+| `VESTA_MODEL_ID` | LiteLLM model string | `openrouter/qwen/qwen3-vl-8b-instruct` |
+| `VESTA_LITELLM_PARAMS` | JSON dict forwarded verbatim to the backend | `{"reasoning_effort": "high"}` |
+
+Keys in `VESTA_LITELLM_PARAMS` take precedence over the params VESTA computes from `reasoning_effort`/`api_base`, so you can override or disable any provider-specific behavior. Put both in your `.env` file:
+
+```bash
+VESTA_MODEL_ID=bedrock/anthropic.claude-sonnet-4-20250514-v1:0
+VESTA_LITELLM_PARAMS={"output_config": {"effort": "low"}}
+```
+
 ### What the Harbor task does
 
 1. **Builds a container** with Python 3.13, PyMC, and all VESTA dependencies

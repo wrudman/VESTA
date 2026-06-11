@@ -1,4 +1,4 @@
-"""Domain registry base classes for the pymc_model_selection pipeline.
+"""Domain registry base classes for the VESTA pipeline.
 
 Four ABC base classes decompose domain-specific behavior so that the
 ``run()`` function in ``experiments.py`` is domain-agnostic:

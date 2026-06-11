@@ -1,31 +1,42 @@
 #!/bin/bash
 set -e
 
-python -c "
+# Model and LiteLLM overrides are read from the environment so the task can be
+# run against any provider/model without editing this script:
+#   VESTA_MODEL_ID        LiteLLM model string (default: azure/gpt-5.4-mini)
+#   VESTA_LITELLM_PARAMS  JSON dict forwarded verbatim to the backend; keys
+#                         here override the computed reasoning_effort/api_base
+#                         params (e.g. '{"reasoning_effort": "high"}').
+MODEL_ID="${VESTA_MODEL_ID:-azure/gpt-5.4-mini}"
+LITELLM_PARAMS="${VESTA_LITELLM_PARAMS:-}"
+
+MODEL_ID="$MODEL_ID" LITELLM_PARAMS="$LITELLM_PARAMS" python -c "
+import json
+import os
+
 from vesta.data import load_distribution_parquet, save_datasets_pickle
 from vesta import ExperimentConfig, run_all
+from vesta.core.experiment_config import ModelConfig, ToolkitConfig, OutputConfig
 
-# Load the parquet data
 datasets = load_distribution_parquet('/app/data/data.parquet', value_column='value')
 save_datasets_pickle(datasets, '/app/data.pkl')
 
-# Create config
+model_kwargs = {'litellm_model': os.environ['MODEL_ID']}
+litellm_params_raw = os.environ.get('LITELLM_PARAMS', '')
+if len(litellm_params_raw) > 0:
+    model_kwargs['litellm_params'] = json.loads(litellm_params_raw)
+
 config = ExperimentConfig(
     domain='distribution_fitting',
     data_pkl='/app/data.pkl',
     max_steps=3,
-    model_id='azure/gpt-5.4-mini',
-    toolkit_mode='generate_only',
-    parallel_nproc=0,
-    parallel_nthread=0,
-    parallel_max_rpm=120,
-    output_expt='harbor_task',
+    model=ModelConfig(**model_kwargs),
+    toolkit=ToolkitConfig(mode='generate_only'),
+    output=OutputConfig(expt='harbor_task'),
 )
 
-# Run VESTA
-results = run_all(config)
+results = run_all(config=config)
 
-# Generate report
 with open('/app/report.md', 'w') as f:
     f.write('# VESTA Distribution Fitting Report\n\n')
     f.write('## Results\n\n')

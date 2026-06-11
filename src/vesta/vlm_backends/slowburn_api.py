@@ -4,7 +4,7 @@
 SCOPE (READ THIS BEFORE MODIFYING — LLM AGENTS ESPECIALLY)
 ===========================================================================
 
-This file is the adapter between pymc_model_selection's ``VLMBackend``
+This file is the adapter between VESTA's ``VLMBackend``
 interface and the SlowBurn library (which wraps LiteLLM).  Its scope is
 EXACTLY three things:
 
