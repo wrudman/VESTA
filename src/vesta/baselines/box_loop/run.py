@@ -293,7 +293,7 @@ def _required_env_names_for_model(*, model_name: str) -> List[str]:
     elif model_name.startswith("openrouter/"):
         return ["OPENROUTER_API_KEY"]
     elif "Qwen" in model_name or "together" in model_name:
-        return ["TOGETHER_API_KEY"]
+        return ["TOGETHERAI_API_KEY"]
     else:
         raise ValueError(f"Unsupported model {model_name!r}.")
 

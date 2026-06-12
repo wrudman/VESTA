@@ -15,7 +15,13 @@ def _load_litellm_params() -> Dict[str, Any]:
         raw_params = raw_params[1:-1]
     if raw_params.startswith('"') and raw_params.endswith('"'):
         raw_params = raw_params[1:-1]
-    return json.loads(raw_params)
+    try:
+        return json.loads(raw_params)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"VESTA_LITELLM_PARAMS is not valid JSON: {exc}. "
+            f"Raw value: {raw_params!r}"
+        ) from exc
 
 
 datasets = load_distribution_parquet("/app/data/data.parquet", value_column="value")

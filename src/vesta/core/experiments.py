@@ -77,7 +77,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
 from dotenv import load_dotenv
 
 _THIS_DIR: str = os.path.dirname(os.path.abspath(__file__))
-_ENV_PATH: str = os.path.join(_THIS_DIR, ".env")
+_ENV_PATH: str = os.path.join(_THIS_DIR, "..", "..", "..", ".env")
 load_dotenv(_ENV_PATH)
 
 if sys.platform == "darwin":

@@ -92,7 +92,7 @@ def main():
 
         # Initialize client based on client_type
         if args.client_type == "azure": 
-            print("API CONFIG", api_config) 
+            print(f"API CONFIG: client_type={args.client_type}, model={api_config.get('model', '<unset>')}")
             client = AzureOpenAI(
                 api_key=api_config['azure_openai_api_key'][0],
                 azure_endpoint=api_config['azure_openai_endpoint'],

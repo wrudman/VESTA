@@ -133,7 +133,7 @@ class AsyncTogetherAI:
     """Async wrapper for Together AI (OpenAI-compatible)."""
     def __init__(self, max_tokens=6000):
         self.client = AsyncOpenAI(
-            api_key=os.environ["tgp_v1_fqzuxCKCDeXXtsFyVw32AplUswp2gipy4qeqqyU4Mf8"],
+            api_key=os.environ["TOGETHERAI_API_KEY"],
             base_url="https://api.together.xyz/v1",
         )
         self.max_tokens = max_tokens

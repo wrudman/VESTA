@@ -5,6 +5,10 @@ __pycache__/*
 **/__pycache__/*
 .ipynb_checkpoints/*
 **/.ipynb_checkpoints/*
+.DS_Store
+**/.DS_Store
+logs/*
+**/logs/*
 expt/outputs/*
 expt/outputs_old/*
 outputs/

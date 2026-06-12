@@ -55,10 +55,12 @@ from pathlib import Path
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Type, Union
 
 import litellm
+from concurry import RateLimit, RateLimitAlgorithm, RateWindow
 from morphic import Typed, validate
 from morphic.string import format_exception_msg
 from pydantic import PrivateAttr
-from slowburn import create_llm
+from slowburn import CostLimit, create_llm
+from slowburn.limits_spec import SLOT_TO_LIMIT_KEY
 
 from vesta.core.logging_utils import format_log_block
 
@@ -246,10 +248,6 @@ class SlowBurnAPIBackend(VLMBackend):
         merged_litellm_params: Dict[str, Any] = {}
         if self.litellm_params is not None:
             merged_litellm_params.update(self.litellm_params)
-
-        from concurry import RateLimit, RateLimitAlgorithm, RateWindow
-        from slowburn import CostLimit
-        from slowburn.limits_spec import SLOT_TO_LIMIT_KEY
 
         budget_rate_window: RateWindow = (
             self.budget_window

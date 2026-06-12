@@ -19,7 +19,7 @@ def load_distribution_csv(path: Union[str, Path], *, value_column: Optional[str]
     return [{
         "data": data,
         "idx": 0,
-        "dist_choice": label or "unknown",
+        "dist_choice": label if label is not None else "unknown",
         "true_params": {},
     }]
 
@@ -36,7 +36,7 @@ def load_distribution_parquet(path: Union[str, Path], *, value_column: Optional[
     return [{
         "data": data,
         "idx": 0,
-        "dist_choice": label or "unknown",
+        "dist_choice": label if label is not None else "unknown",
         "true_params": {},
     }]
 

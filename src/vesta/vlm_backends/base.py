@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union
 
 from morphic import Registry, Typed
+from pydantic import Field
 
 # ---------------------------------------------------------------------------
 #  Tool-calling response types (used by the agentic diagnostic loop)
@@ -46,7 +47,7 @@ class ToolCallResponse(Typed):
     """
 
     content: Optional[str] = None
-    tool_calls: List[ToolCallResult] = []
+    tool_calls: List[ToolCallResult] = Field(default_factory=list)
 
     @property
     def has_tool_calls(self) -> bool:

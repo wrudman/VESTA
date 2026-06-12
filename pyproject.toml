@@ -44,7 +44,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-vllm = ["ray>=2.0.0", "vllm>=0.6.0"]
+vllm = ["ray>=2.0.0", "vllm>=0.6.0", "transformers>=4.40"]
+eval = ["arviz>=1.0.0"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",

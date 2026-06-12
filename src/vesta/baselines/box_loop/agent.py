@@ -50,7 +50,7 @@ class LMExperimenter:
             self._provider = "together"
             self._api_model_name = model_name
             self.llm = OpenAI(
-                api_key=_required_env("TOGETHER_API_KEY"),
+                api_key=_required_env("TOGETHERAI_API_KEY"),
                 base_url="https://api.together.xyz/v1",
             )
         else:
