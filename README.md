@@ -44,9 +44,8 @@ The figure above shows average Jensen-Shannon divergence on the distribution fit
 For time series modeling, we measure Expected Log Predictive Density (ELPD). VESTA outperforms PyVision and Box-LM across all splits, with the largest gains on the Astro split, where the task is to model gravitational-wave chirp signals. The paper reports the full per-LLM results and significance tests.
 
 
-## DAWN Benchmark
-
-DAWN (Dataset for Automated Workflows and Numerical Modeling) is a benchmark for evaluating automated model fitting systems across two domains central to data science and scientific research.
+## DAWN Benchmark 🤗
+DAWN (Dataset for Automated Workflows and Numerical Modeling) is a benchmark for evaluating automated model fitting systems across two domains central to data science and scientific research. [Access DAWN on Hugging Face](https://huggingface.co/datasets/william-rudman/DAWN)
 
 <p align="center">
   <img src="images/data_ex.png" width="95%" alt="DAWN dataset examples"/>
