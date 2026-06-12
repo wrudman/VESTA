@@ -149,80 +149,34 @@ class ModelConfig(Typed):
                 f"Set OPENROUTER_API_KEY or pass --model.api-key."
             )
 
-    def _is_anthropic_model(self) -> bool:
-        """Check whether the model targets Anthropic's API natively.
-
-        Does NOT match OpenRouter-prefixed Anthropic models
-        (``openrouter/anthropic/...``) — those are routed through
-        the OpenRouter provider path instead.
-        """
-        return (
-            self.litellm_model.startswith("anthropic/")
-            or self.litellm_model.startswith("bedrock/anthropic")
-            or self.litellm_model.startswith("vertex_ai/claude")
-        )
-
     def _is_openrouter_model(self) -> bool:
         """Check whether the model is routed through OpenRouter."""
         return self.litellm_model.startswith("openrouter/")
 
-    def _is_azure_model(self) -> bool:
-        """Check whether the model targets Azure OpenAI."""
-        return self.litellm_model.startswith("azure/")
-
-    def _is_gpt_5_4_model(self) -> bool:
-        """Check whether the model is a GPT-5.4 variant."""
-        return "gpt-5.4" in self.litellm_model
-
-    def _is_openrouter_sonnet_4_6(self) -> bool:
-        """Check whether this is Sonnet 4.6 routed through OpenRouter."""
-        return self._is_openrouter_model() and "claude-sonnet-4.6" in self.litellm_model
-
     def _to_litellm_params(self) -> Dict[str, Any]:
-        """Build provider-specific LiteLLM params for backend construction.
+        """Build model-agnostic LiteLLM params for backend construction.
 
-        Reasoning-effort mapping is provider-aware:
-        - OpenRouter Sonnet 4.6: ``extra_body.reasoning`` with ``max_tokens``
-          budget (token-capped thinking). ``low`` → 1024 tokens; ``none`` →
-          disabled.  ``medium``/``high`` raise — only budget-controlled thinking
-          is supported for this model.
-        - Other OpenRouter: ``extra_body.reasoning`` with ``effort`` string.
-        - Azure GPT-5.4: dict ``{"effort": ..., "summary": "detailed"}``
-          (works with both Responses API and Chat Completions via
-          LiteLLM's GPT-5 normalization).
-        - Native Anthropic: ``output_config`` (compatible with forced
-          tool use).
-        - Everything else: plain ``reasoning_effort`` string.
+        VESTA computes only two universal, provider-independent things:
 
-        User-supplied ``litellm_params`` always take precedence: the
-        provider-specific reasoning/api_base params are computed first, then
-        any keys present in ``self.litellm_params`` overwrite them. This lets a
-        caller (Harbor config, CLI, or notebook) override or disable any
-        computed param by passing the same key explicitly.
+        - ``reasoning_effort``: the standard LiteLLM reasoning-effort string
+          (``low`` / ``medium`` / ``high`` / ``none``). LiteLLM translates this
+          into the correct per-provider request shape. VESTA does NOT special
+          case any provider or model here.
+        - ``api_base`` / ``custom_llm_provider``: OpenAI-compatible endpoint
+          routing, when ``api_base`` is set.
+
+        Anything provider-specific (token-budgeted thinking, ``extra_body``,
+        ``output_config``, etc.) must be passed explicitly via
+        ``litellm_params``. Those user-supplied params take precedence and
+        REPLACE the computed reasoning param entirely: if ``litellm_params``
+        contains any reasoning-related key, the computed ``reasoning_effort`` is
+        dropped so the two never conflict (e.g. OpenRouter rejecting both
+        ``reasoning.effort`` and ``reasoning.max_tokens``).
         """
         merged_litellm_params: Dict[str, Any] = {}
 
-        if self._is_openrouter_sonnet_4_6():
-            self._add_openrouter_sonnet_reasoning(merged_litellm_params=merged_litellm_params)
-        elif self.reasoning_effort is ReasoningEffort.none:
-            self._add_disabled_reasoning(merged_litellm_params=merged_litellm_params)
-        elif self._is_openrouter_model():
-            self._add_openrouter_effort_reasoning(merged_litellm_params=merged_litellm_params)
-        elif self._is_azure_model() and self._is_gpt_5_4_model():
-            # Azure GPT-5.4: dict format works with Responses API and
-            # gets normalized to string for Chat Completions by
-            # LiteLLM's GPT-5 transformation.
-            merged_litellm_params["reasoning_effort"] = {
-                "effort": self.reasoning_effort.value,
-                "summary": "detailed",
-            }
-        elif self._is_anthropic_model():
-            # Anthropic Claude 4.6: pass output_config directly.
-            # Using reasoning_effort triggers BOTH thinking (extended
-            # thinking) AND output_config.  Anthropic rejects thinking
-            # when tool_choice forces tool use, so we pass output_config
-            # to set effort without enabling extended thinking.
-            merged_litellm_params["output_config"] = {"effort": self.reasoning_effort.value}
+        if self.reasoning_effort is ReasoningEffort.none:
+            merged_litellm_params["reasoning_effort"] = None
         else:
             merged_litellm_params["reasoning_effort"] = self.reasoning_effort.value
 
@@ -230,75 +184,20 @@ class ModelConfig(Typed):
             merged_litellm_params["api_base"] = self.api_base
             merged_litellm_params["custom_llm_provider"] = "openai"
 
-        # User-supplied litellm_params always win: apply them last so any key
-        # the caller passes (e.g. reasoning_effort, extra_body, api_base)
-        # overrides the provider-specific value computed above.
+        # User-supplied litellm_params win and REPLACE the computed reasoning
+        # config. If the caller passes any reasoning-related key, drop the
+        # computed reasoning_effort so the backend never receives two competing
+        # reasoning specifications (which providers like OpenRouter reject).
         if self.litellm_params is not None:
+            user_sets_reasoning: bool = any(
+                key in self.litellm_params
+                for key in ("reasoning_effort", "reasoning", "extra_body", "output_config", "thinking")
+            )
+            if user_sets_reasoning and "reasoning_effort" in merged_litellm_params:
+                del merged_litellm_params["reasoning_effort"]
             merged_litellm_params.update(self.litellm_params)
 
         return merged_litellm_params
-
-    def _add_openrouter_sonnet_reasoning(
-        self,
-        *,
-        merged_litellm_params: Dict[str, Any],
-    ) -> None:
-        """Configure OpenRouter Sonnet 4.6 token-budgeted reasoning."""
-        if self.reasoning_effort is ReasoningEffort.none:
-            extra_body: Dict[str, Any] = self._get_extra_body(merged_litellm_params=merged_litellm_params)
-            extra_body["reasoning"] = {"enabled": False}
-        elif self.reasoning_effort is ReasoningEffort.low:
-            extra_body: Dict[str, Any] = self._get_extra_body(merged_litellm_params=merged_litellm_params)
-            extra_body["reasoning"] = {
-                "max_tokens": 1024,
-                "exclude": False,
-            }
-        else:
-            raise ValueError(
-                f"Sonnet 4.6 via OpenRouter only supports reasoning_effort "
-                f"'low' or 'none'; got {self.reasoning_effort.value!r}. "
-                f"This model uses token-budgeted thinking (max_tokens), "
-                f"not effort levels."
-            )
-
-    def _add_disabled_reasoning(
-        self,
-        *,
-        merged_litellm_params: Dict[str, Any],
-    ) -> None:
-        """Configure provider-specific disabled reasoning when needed."""
-        if self._is_openrouter_model():
-            # Explicitly request none for reproducibility — omitting
-            # the reasoning object altogether would defer to OpenRouter's
-            # default, which may vary by model.
-            extra_body: Dict[str, Any] = self._get_extra_body(merged_litellm_params=merged_litellm_params)
-            extra_body["reasoning"] = {
-                "effort": "none",
-                "exclude": False,
-            }
-
-    def _add_openrouter_effort_reasoning(
-        self,
-        *,
-        merged_litellm_params: Dict[str, Any],
-    ) -> None:
-        """Configure OpenRouter effort-based reasoning."""
-        extra_body: Dict[str, Any] = self._get_extra_body(merged_litellm_params=merged_litellm_params)
-        extra_body["reasoning"] = {
-            "effort": self.reasoning_effort.value,
-            "exclude": False,
-        }
-
-    def _get_extra_body(
-        self,
-        *,
-        merged_litellm_params: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """Return the mutable LiteLLM extra_body dict, creating it if absent."""
-        if "extra_body" not in merged_litellm_params:
-            merged_litellm_params["extra_body"] = {}
-        extra_body: Dict[str, Any] = merged_litellm_params["extra_body"]
-        return extra_body
 
     @validate
     def to_backend_kwargs(self, *, verbosity: int, max_rpm: int) -> Dict[str, Any]:

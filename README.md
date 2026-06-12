@@ -101,7 +101,7 @@ harbor run \
 
 `.env` must hold the API keys for your LLM provider (see `.env.example`). The task builds the Docker environment (Python 3.13, PyMC, VESTA, all dependencies), loads the dataset, runs the VLM-guided fitting pipeline, and scores the result with the verifier.
 
-### Choosing a model and overriding LLM params
+### Choosing a model
 
 The reference solution reads two optional environment variables, so you can switch providers/models without editing any code:
 
@@ -110,35 +110,36 @@ The reference solution reads two optional environment variables, so you can swit
 | `VESTA_MODEL_ID` | LiteLLM model string | `anthropic/claude-sonnet-4.6` |
 | `VESTA_LITELLM_PARAMS` | JSON dict forwarded verbatim to the backend | `{"reasoning_effort": "low"}` |
 
-Keys in `VESTA_LITELLM_PARAMS` take precedence over the params VESTA computes from `reasoning_effort`/`api_base`, so you can override or disable any provider-specific behavior. Put both in your `.env` file:
+Keys in `VESTA_LITELLM_PARAMS` take precedence over the params VESTA computes from `reasoning_effort`/`api_base`, so you can override or disable any provider-specific behavior. See [Run with your own API key](#run-with-your-own-api-key) below for the full setup.
+
+## Tutorials
+
+The instructions below get you running fast. For step-by-step walkthroughs of each
+flow, see the [`tutorials/`](tutorials/) folder.
+
+**Using an AI coding agent?** Clone the repo and point your agent at the
+[`AGENTS.md`](AGENTS.md) file, which has detailed, machine-readable recipes for
+every flow. For example, with the Claude CLI:
+
+```bash
+claude -p "Read AGENTS.md and run VESTA on my data file ./my_data.csv"
+```
+
+### Run with your own API key
+
+Copy the example environment file and add your provider credentials:
+
+```bash
+cp .env.example .env
+# Edit .env: add your API key (e.g. ANTHROPIC_API_KEY) and pick a model
+```
+
+VESTA uses [LiteLLM](https://docs.litellm.ai/docs/providers) model names of the
+form `provider/model-name`. Set the model in `.env`:
 
 ```bash
 VESTA_MODEL_ID=anthropic/claude-sonnet-4.6
 VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
-```
-
-The JSON value must be single-quoted so the shell passes it as a single string.
-
-## Tutorials
-
-For AI coding assistants: point your agent to the AGENTS.md file at the root of this repository. It contains machine-readable setup instructions, file paths, and step-by-step recipes for every extension type.
-
-### Run with your own API key
-
-Copy the example environment file and fill in your provider's credentials:
-
-```bash
-cp .env.example .env
-# Edit .env to add your API key (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)
-```
-
-Set the model you want to use. VESTA uses [LiteLLM](https://docs.litellm.ai/docs/providers) model names, which follow the pattern `provider/model-name`:
-
-```bash
-# Examples:
-VESTA_MODEL_ID=openai/gpt-4o-mini
-VESTA_MODEL_ID=anthropic/claude-sonnet-4-20250514
-VESTA_MODEL_ID=bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0
 ```
 
 Then run via Harbor:
@@ -147,62 +148,35 @@ Then run via Harbor:
 harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env
 ```
 
+Full walkthrough: [`tutorials/1_run_with_your_api_key.sh`](tutorials/1_run_with_your_api_key.sh).
+
 ### Run VESTA on your own data
 
-VESTA reads CSV, Parquet, and Pickle files. Place your dataset at `harbor/tasks/vesta-distribution-fitting/data/data.parquet` (or edit `solution/solve.sh` to point at a different path), then run:
+VESTA reads CSV and Parquet. The distribution-fitting task loads a single `value`
+column from `harbor/tasks/vesta-distribution-fitting/data/data.parquet`. Convert
+your file into that layout and run the task. The helper script does both:
 
 ```bash
-harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env
+bash tutorials/2_bring_your_own_data.sh my_data.csv value_column
 ```
 
-For CSV files, convert first:
+Full walkthrough: [`tutorials/2_bring_your_own_data.sh`](tutorials/2_bring_your_own_data.sh).
 
-```python
-from vesta.data import load_distribution_csv, save_datasets_pickle
-datasets = load_distribution_csv("my_data.csv", value_column="values")
-save_datasets_pickle(datasets, "data.parquet")
-```
+### Add expert tools to a domain
 
-Time-series data works the same way with `load_timeseries_csv` and `load_timeseries_parquet`.
+Expert tools are diagnostics the VLM can call (QQ plots, moment calculators,
+statistical tests). Add one by subclassing the domain's tool registry in its
+toolkit file (`src/vesta/domains/<domain>/toolkit.py`); it auto-registers.
 
-### Add expert tools to an existing domain
-
-Edit the toolkit file for your domain:
-
-- Distribution fitting: `src/vesta/domains/distribution_fitting/toolkit.py`
-- Time series: `src/vesta/domains/time_series/toolkit.py`
-
-Subclass the domain's tool registry, set the required ClassVars (`tool_description`, `output_type`, `parameters_schema`), and implement `execute()`. The tool auto-registers and becomes available to the VLM immediately. No wiring needed.
+Full walkthrough: [`tutorials/3_add_expert_tools.md`](tutorials/3_add_expert_tools.md).
 
 ### Add a new domain
 
-Create a new directory under `src/vesta/domains/` with four files:
+A domain is a self-contained modeling problem. Create a package under
+`src/vesta/domains/<your_domain>/` (toolkit, prompts, plotting, init), register it
+in the `Domain` enum, and add a Harbor task to run it.
 
-- `__init__.py` (register the domain)
-- `toolkit.py` (define expert tools)
-- `prompts.py` (VLM prompt templates)
-- `plotting.py` (visualization and fit-state extraction)
-
-Then add the domain to the `Domain` enum in `src/vesta/core/experiment_enums.py` and create a corresponding Harbor task under `harbor/tasks/`.
-
-### What the Harbor task does
-
-1. **Builds a container** with Python 3.13, PyMC, and all VESTA dependencies
-2. **Loads your dataset** (baked into the container or mounted at runtime)
-3. **Runs VESTA's refinement loop**: diagnostic tools → model proposal → code generation → fitting → summary
-4. **Verifies results** by checking that VESTA completed successfully and produced a valid report
-
-### Task structure
-
-```
-harbor/tasks/vesta-distribution-fitting/
-├── task.toml              # Task config (timeouts, resources, metadata)
-├── instruction.md         # Natural language instructions for the agent
-├── data/data.parquet      # Test dataset
-├── environment/Dockerfile # Container image with VESTA + dependencies
-├── tests/test.sh          # Verifier (writes reward to /logs/verifier/reward.txt)
-└── solution/solve.sh      # Reference implementation
-```
+Full walkthrough: [`tutorials/4_add_a_new_domain.md`](tutorials/4_add_a_new_domain.md).
 
 ## Development
 
@@ -211,7 +185,8 @@ For working on VESTA itself, install from source:
 ```bash
 git clone https://github.com/adivekar-utexas/VESTA
 cd VESTA
-pip install -e ".[dev]"
+pip install uv
+uv pip install -e ".[dev]"
 ```
 
 This installs VESTA as an editable package. The core pipeline lives in

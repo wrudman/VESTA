@@ -1,19 +1,17 @@
-FROM python:3.13-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install VESTA from local source (baked into image at build time)
+# Install VESTA from local source (baked into image at build time).
 COPY src /tmp/vesta-src/src
 COPY pyproject.toml /tmp/vesta-src/pyproject.toml
 COPY README.md /tmp/vesta-src/README.md
 COPY LICENSE /tmp/vesta-src/LICENSE
-RUN cd /tmp/vesta-src && pip install --no-cache-dir . && rm -rf /tmp/vesta-src
+RUN cd /tmp/vesta-src \
+    && uv pip install --system --no-cache . \
+    && rm -rf /tmp/vesta-src
 
 RUN mkdir -p /app /output
 
-# Bake in the test dataset
+# Bake in the task dataset.
 COPY harbor/tasks/vesta-distribution-fitting/data /app/data
 
 WORKDIR /app

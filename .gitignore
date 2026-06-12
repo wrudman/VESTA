@@ -10,3 +10,5 @@ expt/outputs_old/*
 outputs/
 tests/e2e_outputs/*
 stat_plots/*
+**/_pytensor_cache/*
+jobs/*

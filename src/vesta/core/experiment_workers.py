@@ -293,7 +293,7 @@ class DatasetRunnerThread(Typed, Worker):
     def run_dataset(self, dataset: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the full pipeline for one dataset."""
         # Inline import required: Worker methods may execute in process remote context
-        from experiments import run
+        from vesta.core.experiments import run
 
         ds_fields: Dict[str, Any] = DomainPrompts.of(self.config.domain).extract_dataset_fields(dataset)
         dataset_idx: int = ds_fields["dataset_idx"]

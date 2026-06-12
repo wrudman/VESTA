@@ -37,11 +37,10 @@ tool-only with no content), ``response_type(**parsed)`` will raise
 retry automatically.  The backend never needs to know WHY it failed.
 
 Provider routing is done entirely through the LiteLLM model string:
-    - ``azure/gpt-5-mini``             -> Azure OpenAI
-    - ``azure/responses/gpt-5-mini``   -> Azure OpenAI (Responses API)
-    - ``bedrock/anthropic.claude-sonnet-4-20250514-v1:0`` -> AWS Bedrock
+    - ``azure/gpt-5.4-mini``           -> Azure OpenAI
+    - ``azure/responses/gpt-5.4-mini`` -> Azure OpenAI (Responses API)
+    - ``bedrock/us.anthropic.claude-sonnet-4-6`` -> AWS Bedrock
     - ``together_ai/Qwen/Qwen3.5-9B`` -> Together AI
-    - ``openrouter/qwen/qwen3-vl-8b-instruct`` -> OpenRouter
     - ``gpt-4o-mini``                  -> OpenAI direct
 
 API keys are read from standard env vars that LiteLLM recognizes:
@@ -222,7 +221,7 @@ class SlowBurnAPIBackend(VLMBackend):
     retry_algorithm: str = "Linear"
     call_timeout: float = 180.0
     max_rpm: int = 0
-    budget_usd: float = float("inf")
+    budget: float = float("inf")
     budget_window: str = "hourly"
     api_key: Optional[str] = None
     litellm_params: Optional[Dict[str, Any]] = None
@@ -248,10 +247,23 @@ class SlowBurnAPIBackend(VLMBackend):
         if self.litellm_params is not None:
             merged_litellm_params.update(self.litellm_params)
 
+        from concurry import RateLimit, RateLimitAlgorithm, RateWindow
+        from slowburn import CostLimit
+        from slowburn.limits_spec import SLOT_TO_LIMIT_KEY
+
+        budget_rate_window: RateWindow = (
+            self.budget_window
+            if isinstance(self.budget_window, RateWindow)
+            else RateWindow(self.budget_window)
+        )
+
+        limits_dict: Dict[str, Any] = {"budget": [CostLimit(budget_usd=self.budget, window=budget_rate_window, algorithm=RateLimitAlgorithm.GCRA)]}
+        if self.max_rpm > 0:
+            limits_dict["requests"] = [RateLimit(key=SLOT_TO_LIMIT_KEY["requests"], capacity=self.max_rpm, window=RateWindow.Minutely, algorithm=RateLimitAlgorithm.GCRA)]
+
         create_llm_kwargs: Dict[str, Any] = dict(
             model=self.litellm_model,
-            budget_usd=self.budget_usd,
-            window=self.budget_window,
+            limits=limits_dict,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             timeout=self.call_timeout,
@@ -262,12 +274,6 @@ class SlowBurnAPIBackend(VLMBackend):
         )
         if self.api_key is not None:
             create_llm_kwargs["api_key"] = self.api_key
-        if self.max_rpm > 0:
-            create_llm_kwargs["max_rpm"] = self.max_rpm
-
-        # Force GCRA from the PyMC side so behavior is stable across SlowBurn versions.
-        # We pass the string name for compatibility with older/newer SlowBurn/concurry.
-        create_llm_kwargs["rate_limit_algorithm"] = "GCRA"
 
         self._llm = create_llm(**create_llm_kwargs)
         if self.verbosity >= 1:

@@ -12,7 +12,8 @@ cp .env.example .env
 # Edit .env to add your LLM API key(s) (see .env.example for provider-specific vars)
 
 # 2. Install (editable, with dev tools)
-pip install -e ".[dev]"
+pip install uv
+uv pip install -e ".[dev]"
 
 # 3. Run the pre-built harbor task on the bundled dataset
 pip install harbor
@@ -50,9 +51,15 @@ VESTA/
       tests/test.sh       # Verifier
       data/data.parquet   # Bundled test dataset
   DAWN/                   # DAWN dataset generators (out of scope for agents)
-  examples/               # Python API quickstarts
+  tutorials/              # Runnable + code-editing walkthroughs (all via harbor run)
   .env.example            # Template for your API keys
 ```
+
+VESTA is always run through `harbor run`. There is no separate "run it directly in
+Python" entry point in the supported workflow: the Harbor task is the contract that
+pins the container, dependencies, dataset path, and verifier. Extension flows
+(adding tools or domains) edit the codebase and are then evaluated the same way,
+through `harbor run`.
 
 ## Running with Your Own API Keys
 
@@ -63,10 +70,9 @@ VESTA uses LiteLLM for multi-provider LLM access. You need valid API keys for at
 LiteLLM is a unified API that normalizes requests across 100+ providers via a model name prefix. The full list is at https://docs.litellm.ai/docs/providers
 
 Common model strings:
-- `azure/gpt-5-mini` -- Azure OpenAI GPT-5 mini
-- `bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0` -- AWS Bedrock Claude Sonnet 4
+- `azure/gpt-5.4-mini` -- Azure OpenAI GPT-5.4 mini
+- `bedrock/us.anthropic.claude-sonnet-4-6` -- AWS Bedrock Claude Sonnet 4.6
 - `together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` -- Together AI Llama 4
-- `openrouter/anthropic/claude-sonnet-4-20250514` -- OpenRouter Claude Sonnet 4
 - `gpt-4o-mini` -- OpenAI direct
 - `anthropic/claude-sonnet-4.6` -- Anthropic direct
 
@@ -86,11 +92,6 @@ For Together AI:
 TOGETHERAI_API_KEY=tgp_v1_your_actual_together_key
 ```
 
-For OpenRouter:
-```dotenv
-OPENROUTER_API_KEY=sk-or-v1-your_actual_key
-```
-
 Also set the model override variable in `.env`:
 ```dotenv
 VESTA_MODEL_ID=anthropic/claude-sonnet-4.6
@@ -106,22 +107,6 @@ harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-
 ```
 
 Harbor builds the Docker image (you need Docker running), installs VESTA inside the container, installs your dataset, runs the VESTA pipeline, and writes results to `/app/report.md`. The verifier checks that the report was produced. You can check `/logs/agent/` inside the container if debugging is needed.
-
-### Development (runs without Docker)
-
-For iterating on VESTA itself, use the editable install:
-
-```bash
-pip install -e ".[dev]"
-
-# Run directly via Python API:
-python examples/quickstart_csv.py
-
-# Or use the CLI (reads config from CLI flags):
-vesta --data-pkl my_data.pkl --max-steps 3 --model.litellm-model anthropic/claude-sonnet-4.6 --toolkit.mode generate_only --output.expt my_experiment
-```
-
-The CLI flags use pydantic-settings (kebab-case). Every nested config field is a dot-separated flag: `--model.litellm-model`, `--toolkit.mode`, `--output.expt`.
 
 ## Bringing Your Own Data
 
@@ -161,114 +146,98 @@ save_datasets_pickle(datasets, "my_timeseries.pkl")
 
 The dict has keys: `data` (pd.Series), `series_id` (int or str), `anomaly_info` (str, can be "none").
 
-### Step 2: Run via harbor
+### Step 2: Put your data where the harbor task reads it
 
-Replace the bundled data with your own parquet (or pkl). You can either bake it into the Dockerfile or mount it at runtime. The pre-built harbor task expects a parquet file at `/app/data/data.parquet`. To use your own:
-
-1. Copy your file to `harbor/tasks/vesta-distribution-fitting/data/data.parquet`
-2. Run `harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env`
-
-To use a different harbor task directory (e.g. for time-series), create a new task directory under `harbor/tasks/` following the same structure as `vesta-distribution-fitting/`. The `solution/solve.sh` script is what actually runs the VESTA pipeline; the `task.toml` controls time limits and resource requirements.
-
-### Quick test without harbor
-
-To test locally (for development only), you can run the pipeline directly:
+The distribution-fitting task's `solution/solve.sh` loads its dataset from
+`harbor/tasks/vesta-distribution-fitting/data/data.parquet` as a single column
+named `value`. So your data must be written into that exact layout. The simplest
+path is to use the loaders to read your file, then write a `value`-column parquet:
 
 ```python
-from vesta.data import load_distribution_parquet, save_datasets_pickle
-from vesta import ExperimentConfig, run_all
-from vesta.core.experiment_config import ModelConfig, ToolkitConfig, OutputConfig
+import pandas as pd
+from vesta.data import load_distribution_csv, load_distribution_parquet
 
-datasets = load_distribution_parquet("my_data.parquet", value_column="value")
-save_datasets_pickle(datasets, "my_data.pkl")
+# Read your file (CSV or Parquet). value_column is auto-detected for single-column files.
+datasets = load_distribution_csv("my_data.csv", value_column="my_values_col")  # or load_distribution_parquet(...)
+observations = datasets[0]["data"]
 
-config = ExperimentConfig(
-    domain="distribution_fitting",
-    data_pkl="my_data.pkl",
-    max_steps=3,
-    model=ModelConfig(
-        litellm_model="anthropic/claude-sonnet-4.6",
-        litellm_params={"reasoning_effort": "low"},
-    ),
-    toolkit=ToolkitConfig(mode="generate_only"),
-    output=OutputConfig(expt="my_experiment"),
+# Write it where the task expects it.
+pd.DataFrame({"value": observations}).to_parquet(
+    "harbor/tasks/vesta-distribution-fitting/data/data.parquet", index=False
 )
-results = run_all(config=config)
 ```
 
-Note: `ModelConfig`, `ToolkitConfig`, and `OutputConfig` are required nested objects. You cannot pass flat kwargs like `model_id=` or `toolkit_mode=` directly to `ExperimentConfig` -- those were removed in favor of Pydantic-validated nested config.
+Then run:
+
+```bash
+harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env
+```
+
+The runnable version of this is `tutorials/2_bring_your_own_data.sh`, which takes
+your file path and value column as arguments and does the conversion + run for you.
+
+To run a different domain (e.g. time series), create a new task directory under
+`harbor/tasks/` following the same structure as `vesta-distribution-fitting/`,
+adjust its `solution/solve.sh` to load your data and set `domain=`, and run that
+task path instead.
 
 ## Using Different Models and Overriding LLM Params
 
-### Switching models via env var
+VESTA is configured through environment variables that `solution/solve.sh` reads.
+You never edit Python to switch models; you set env vars (in `.env` or inline) and
+run the harbor task.
 
-The harbor task's `solution/solve.sh` reads `VESTA_MODEL_ID` from the environment. Set it in your `.env` file:
+| Variable | Purpose | Default |
+|---|---|---|
+| `VESTA_MODEL_ID` | LiteLLM model string (`provider/model-name`) | `anthropic/claude-sonnet-4.6` |
+| `VESTA_LITELLM_PARAMS` | JSON dict forwarded verbatim to the backend | (unset) |
+| `VESTA_TOOLKIT_MODE` | Toolkit mode (see "Toolkit Modes" below) | `generate_only` |
+
+### Switching models
+
+Set the model in `.env`, then run the task:
 
 ```dotenv
 VESTA_MODEL_ID=anthropic/claude-sonnet-4.6
 VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
 ```
 
-Then run `harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env`.
+```bash
+harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env
+```
 
 ### Overriding LiteLLM params
 
-Some models need provider-specific params (e.g. reasoning effort, extra_body). VESTA computes these automatically from `reasoning_effort` (a ModelConfig field), but you can override any computed value by passing `litellm_params` as a JSON dict.
-
-**Via env var (for harbor):**
-```dotenv
-VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
-```
-
-The solve.sh reads this env var, parses it as JSON, and passes it to `ModelConfig`. Keys in `litellm_params` override any computed values.
-
-**Via Python API:**
-```python
-model = ModelConfig(
-    litellm_model="bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0",
-    litellm_params={"output_config": {"effort": "high"}},
-)
-config = ExperimentConfig(
-    domain="distribution_fitting",
-    data_pkl="my_data.pkl",
-    max_steps=3,
-    model=model,
-    toolkit=ToolkitConfig(mode="generate_only"),
-    output=OutputConfig(expt="my_experiment"),
-)
-```
+`VESTA_LITELLM_PARAMS` is a JSON dict that `solve.sh` parses and forwards to the
+backend as `ModelConfig(litellm_params=...)`. Keys here take precedence over the
+params VESTA computes from `reasoning_effort`/`api_base`. If you set any
+reasoning-related key here, VESTA drops its own computed `reasoning_effort` so the
+two never conflict. This is the single override knob: anything provider-specific goes here.
 
 ### Common model configs
 
+Each row is a `.env` pairing. The JSON must be single-quoted.
+
 **Anthropic Claude Sonnet 4.6 (primary example):**
-```python
-ModelConfig(
-    litellm_model="anthropic/claude-sonnet-4.6",
-    litellm_params={"reasoning_effort": "low"},
-)
+```dotenv
+VESTA_MODEL_ID=anthropic/claude-sonnet-4.6
+VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
 ```
 
-**Azure OpenAI GPT-5 mini:**
-```python
-ModelConfig(litellm_model="azure/gpt-5-mini")
+**Azure OpenAI GPT-5.4 mini:**
+```dotenv
+VESTA_MODEL_ID=azure/gpt-5.4-mini
 ```
 
-**Claude Sonnet 4 via Bedrock:**
-```python
-ModelConfig(
-    litellm_model="bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0",
-    litellm_params={"output_config": {"effort": "low"}},
-)
+**Claude Sonnet 4.6 via Bedrock:**
+```dotenv
+VESTA_MODEL_ID=bedrock/us.anthropic.claude-sonnet-4-6
+VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
 ```
 
 **Llama 4 via Together AI:**
-```python
-ModelConfig(litellm_model="together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8")
-```
-
-**Claude Sonnet 4 via OpenRouter:**
-```python
-ModelConfig(litellm_model="openrouter/anthropic/claude-sonnet-4-20250514")
+```dotenv
+VESTA_MODEL_ID=together_ai/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
 ```
 
 The model string must be a valid LiteLLM model identifier. See https://docs.litellm.ai/docs/providers for the full list.
@@ -398,7 +367,8 @@ Then import your domain's `__init__.py` in `src/vesta/domains/__init__.py` so Mo
 
 ## Toolkit Modes
 
-VESTA supports four toolkit modes (set via `ToolkitConfig(mode=...)` or `--toolkit.mode`):
+VESTA supports five toolkit modes. Set the mode for a harbor run via the
+`VESTA_TOOLKIT_MODE` environment variable (read by `solution/solve.sh`):
 
 | Mode | What it does |
 |---|---|
@@ -408,7 +378,12 @@ VESTA supports four toolkit modes (set via `ToolkitConfig(mode=...)` or `--toolk
 | `dynamic` | Expert tools PLUS the dynamic generator. The VLM can pick an existing tool or create a new one. |
 | `accumulated_only` | Uses previously accumulated tools from a registry file (for tool-persistence experiments). |
 
-The default in the harbor task is `generate_only`. For production use, `dynamic` is recommended.
+The default in the harbor task is `generate_only`. To exercise expert tools (e.g.
+after adding one per the tutorial below), set `dynamic` or `expert`:
+
+```dotenv
+VESTA_TOOLKIT_MODE=dynamic
+```
 
 ## The Harbor Task Structure
 
@@ -418,7 +393,7 @@ Each task lives at `harbor/tasks/<task-name>/` and has:
 - `instruction.md` -- natural-language instructions shown to the agent at runtime.
 - `environment/Dockerfile` -- container build instructions. The build context is the VESTA repo root.
 - `data/` -- bundled test data. The default distribution-fitting task expects `data/data.parquet`.
-- `solution/solve.sh` -- the reference solution. The default runs the VESTA Python API on the bundled data.
+- `solution/solve.sh` -- the reference solution that the `oracle` agent executes. It loads the bundled data and runs the VESTA pipeline; model, params, and toolkit mode are read from `VESTA_MODEL_ID`, `VESTA_LITELLM_PARAMS`, and `VESTA_TOOLKIT_MODE`.
 - `tests/test.sh` -- the verifier. Default checks that `/app/report.md` was created.
 
 To create a new harbor task, copy the existing one and modify:

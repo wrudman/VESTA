@@ -16,7 +16,7 @@ Supported failure modes:
 
 Usage::
 
-    from api_repair_diagnostics import build_api_discovery_report
+    from vesta.core.api_repair_diagnostics import build_api_discovery_report
 
     report = build_api_discovery_report(
         generated_code=previous_code,

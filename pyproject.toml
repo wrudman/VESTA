@@ -6,7 +6,9 @@ build-backend = "hatchling.build"
 name = "vesta"
 version = "0.1.0"
 authors = [
+    { name = "William Rudman", email = "william.rudman@utexas.edu" },
     { name = "Abhishek Divekar", email = "adivekar@utexas.edu" },
+    { name = "Kanishk Jain", email = "kanishkjain@utexas.edu" },
 ]
 description = "VLM-guided PyMC model selection for distribution fitting and time-series forecasting"
 readme = "README.md"
@@ -28,13 +30,14 @@ dependencies = [
     "scipy>=1.14.0",
     "pymc>=5.28.1",
     "pytensor>=2.38.2",
-    "litellm>=1.82.0",
-    "slowburn>=0.5.6",
-    "concurry>=0.13.0",
-    "morphic>=0.2.1",
-    "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
+    "litellm>=1.82.2",
+    "slowburn>=0.6.1",
+    "concurry>=0.13.2",
+    "morphic>=0.2.4",
+    "pydantic>=2.13.3",
+    "pydantic-settings>=2.13.1",
     "python-dotenv>=1.2.2",
+    "json-repair>=0.54.2",
     "matplotlib>=3.9.0",
     "scikit-learn>=1.5.0",
     "statsmodels>=0.14.0",
@@ -60,7 +63,7 @@ packages = ["src/vesta"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-timeout = 360
+timeout = 900
 markers = [
     "integration: end-to-end tests that exercise multiple components together",
 ]

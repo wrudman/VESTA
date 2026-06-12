@@ -30,11 +30,11 @@ and the feedback-prompt builder reads from this single source of truth.
 
 Usage from notebook::
 
-    from experiment_config import ExperimentConfig, ModelConfig, ToolkitConfig, OutputConfig
-    from experiments import run_all
+    from vesta import ExperimentConfig, run_all
+    from vesta.core.experiment_config import ModelConfig, ToolkitConfig, OutputConfig
 
     config = ExperimentConfig(
-        model=ModelConfig(litellm_model="azure/gpt-5-mini"),
+        model=ModelConfig(litellm_model="anthropic/claude-sonnet-4.6"),
         toolkit=ToolkitConfig(mode="expert"),
         output=OutputConfig(expt="my_experiment"),
         data_pkl="data_single.pkl",
