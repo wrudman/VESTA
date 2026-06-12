@@ -3,11 +3,11 @@ set -e
 
 # Model and LiteLLM overrides are read from the environment so the task can be
 # run against any provider/model without editing this script:
-#   VESTA_MODEL_ID        LiteLLM model string (default: azure/gpt-5.4-mini)
+#   VESTA_MODEL_ID        LiteLLM model string (default: anthropic/claude-sonnet-4.6)
 #   VESTA_LITELLM_PARAMS  JSON dict forwarded verbatim to the backend; keys
 #                         here override the computed reasoning_effort/api_base
-#                         params (e.g. '{"reasoning_effort": "high"}').
-MODEL_ID="${VESTA_MODEL_ID:-azure/gpt-5.4-mini}"
+#                         params (e.g. '{"reasoning_effort": "low"}').
+MODEL_ID="${VESTA_MODEL_ID:-anthropic/claude-sonnet-4.6}"
 LITELLM_PARAMS="${VESTA_LITELLM_PARAMS:-}"
 
 MODEL_ID="$MODEL_ID" LITELLM_PARAMS="$LITELLM_PARAMS" python -c "

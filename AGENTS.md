@@ -93,10 +93,11 @@ OPENROUTER_API_KEY=sk-or-v1-your_actual_key
 
 Also set the model override variable in `.env`:
 ```dotenv
-VESTA_MODEL_ID=azure/gpt-5-mini
+VESTA_MODEL_ID=anthropic/claude-sonnet-4.6
+VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
 ```
 
-The harbor task reads this env var; the Docker container inherits it when run with `--env-file .env`.
+The harbor task reads these env vars; the Docker container inherits them when run with `--env-file .env`.
 
 ### Step 2: Run
 
@@ -117,7 +118,7 @@ pip install -e ".[dev]"
 python examples/quickstart_csv.py
 
 # Or use the CLI (reads config from CLI flags):
-vesta --data-pkl my_data.pkl --max-steps 3 --model.litellm-model azure/gpt-5-mini --toolkit.mode generate_only --output.expt my_experiment
+vesta --data-pkl my_data.pkl --max-steps 3 --model.litellm-model anthropic/claude-sonnet-4.6 --toolkit.mode generate_only --output.expt my_experiment
 ```
 
 The CLI flags use pydantic-settings (kebab-case). Every nested config field is a dot-separated flag: `--model.litellm-model`, `--toolkit.mode`, `--output.expt`.
@@ -185,7 +186,10 @@ config = ExperimentConfig(
     domain="distribution_fitting",
     data_pkl="my_data.pkl",
     max_steps=3,
-    model=ModelConfig(litellm_model="azure/gpt-5-mini"),
+    model=ModelConfig(
+        litellm_model="anthropic/claude-sonnet-4.6",
+        litellm_params={"reasoning_effort": "low"},
+    ),
     toolkit=ToolkitConfig(mode="generate_only"),
     output=OutputConfig(expt="my_experiment"),
 )
@@ -201,7 +205,8 @@ Note: `ModelConfig`, `ToolkitConfig`, and `OutputConfig` are required nested obj
 The harbor task's `solution/solve.sh` reads `VESTA_MODEL_ID` from the environment. Set it in your `.env` file:
 
 ```dotenv
-VESTA_MODEL_ID=openrouter/anthropic/claude-sonnet-4-20250514
+VESTA_MODEL_ID=anthropic/claude-sonnet-4.6
+VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
 ```
 
 Then run `harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env`.
@@ -212,7 +217,7 @@ Some models need provider-specific params (e.g. reasoning effort, extra_body). V
 
 **Via env var (for harbor):**
 ```dotenv
-VESTA_LITELLM_PARAMS='{"reasoning_effort": "high"}'
+VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
 ```
 
 The solve.sh reads this env var, parses it as JSON, and passes it to `ModelConfig`. Keys in `litellm_params` override any computed values.
@@ -235,10 +240,17 @@ config = ExperimentConfig(
 
 ### Common model configs
 
-**Azure OpenAI GPT-5 mini (default):**
+**Anthropic Claude Sonnet 4.6 (primary example):**
+```python
+ModelConfig(
+    litellm_model="anthropic/claude-sonnet-4.6",
+    litellm_params={"reasoning_effort": "low"},
+)
+```
+
+**Azure OpenAI GPT-5 mini:**
 ```python
 ModelConfig(litellm_model="azure/gpt-5-mini")
-# VESTA auto-sets reasoning_effort="low" for iterative tasks
 ```
 
 **Claude Sonnet 4 via Bedrock:**

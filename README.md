@@ -87,8 +87,12 @@ VESTA ships as a [Harbor](https://github.com/harbor-framework/harbor) task. Harb
 pip install harbor
 
 # Run VESTA on the DAWN distribution fitting task.
-# --path points at a local task directory; --agent oracle runs the
-# reference solution (solution/solve.sh), which is the VESTA pipeline itself.
+# --path points at a local task directory.
+# --agent oracle runs the built-in "oracle" agent, which executes
+#   solution/solve.sh (the reference implementation, i.e. the VESTA
+#   pipeline itself). Other agents (e.g. claude-code) let an LLM try
+#   to solve the task on its own; oracle is the simplest and gives a
+#   reproducible baseline.
 harbor run \
     --path harbor/tasks/vesta-distribution-fitting/ \
     --agent oracle \
@@ -104,13 +108,13 @@ The reference solution reads two optional environment variables, so you can swit
 | Variable | Purpose | Example |
 |---|---|---|
 | `VESTA_MODEL_ID` | LiteLLM model string | `anthropic/claude-sonnet-4.6` |
-| `VESTA_LITELLM_PARAMS` | JSON dict forwarded verbatim to the backend | `{"reasoning_effort": "high"}` |
+| `VESTA_LITELLM_PARAMS` | JSON dict forwarded verbatim to the backend | `{"reasoning_effort": "low"}` |
 
 Keys in `VESTA_LITELLM_PARAMS` take precedence over the params VESTA computes from `reasoning_effort`/`api_base`, so you can override or disable any provider-specific behavior. Put both in your `.env` file:
 
 ```bash
 VESTA_MODEL_ID=anthropic/claude-sonnet-4.6
-VESTA_LITELLM_PARAMS='{"output_config": {"effort": "high"}}'
+VESTA_LITELLM_PARAMS='{"reasoning_effort": "low"}'
 ```
 
 The JSON value must be single-quoted so the shell passes it as a single string.
@@ -143,7 +147,7 @@ Then run via Harbor:
 harbor run --path harbor/tasks/vesta-distribution-fitting/ --agent oracle --env-file .env
 ```
 
-### Bring your own data
+### Run VESTA on your own data
 
 VESTA reads CSV, Parquet, and Pickle files. Place your dataset at `harbor/tasks/vesta-distribution-fitting/data/data.parquet` (or edit `solution/solve.sh` to point at a different path), then run:
 
